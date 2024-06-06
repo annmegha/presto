@@ -77,7 +77,7 @@ public class UseTask
             denyCatalogAccess(catalog);
         }
 
-        CatalogSchemaName name = new CatalogSchemaName(catalog, schema);
+        CatalogSchemaName name = new CatalogSchemaName(catalog, schema); //dummy comment
 
         MetadataResolver metadataresolver = metadata.getMetadataResolver(session);
         if (!metadataresolver.schemaExists(name)) {

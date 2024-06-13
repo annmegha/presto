@@ -36,7 +36,6 @@ import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorSplitManager.SplitSchedulingContext;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
-import com.facebook.presto.spi.security.ConnectorIdentity;
 import com.facebook.presto.testing.TestingConnectorContext;
 import com.facebook.presto.testing.TestingConnectorSession;
 import com.google.common.collect.ImmutableList;
@@ -81,7 +80,6 @@ public class TestCassandraConnector
     private static final Date DATE = new Date();
     private static final ConnectorSession SESSION = new TestingConnectorSession(
             "user",
-            new ConnectorIdentity("user", Optional.empty(), Optional.empty()),
             Optional.of("test"),
             Optional.empty(),
             UTC_KEY,

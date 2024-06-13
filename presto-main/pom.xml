@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.facebook.presto</groupId>
         <artifactId>presto-root</artifactId>
-        <version>0.289-SNAPSHOT</version>
+        <version>0.288-SNAPSHOT</version>
     </parent>
 
     <artifactId>presto-main</artifactId>
@@ -79,6 +79,11 @@
         <dependency>
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-expressions</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-ui</artifactId>
         </dependency>
 
         <dependency>
@@ -574,22 +579,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <!-- Requires the UI as a dependency by default. If the UI is   -->
-            <!-- not required, turn off this profile (-P '!ui') to prevent  -->
-            <!-- building it      -->
-            <id>ui</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>com.facebook.presto</groupId>
-                    <artifactId>presto-ui</artifactId>
-                    <scope>runtime</scope>
-                </dependency>
-            </dependencies>
-        </profile>
         <profile>
             <id>benchmarks</id>
             <build>

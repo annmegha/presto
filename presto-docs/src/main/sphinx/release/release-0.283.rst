@@ -31,8 +31,8 @@ _______________
 * Remove ``Experimental`` prefix from Dynamic Filtering.
 * Add support for Hive S3 configuration to Iceberg Hadoop and Nessie catalogs.
 
-Hive Connector Changes
-______________________
+Hive Changes
+____________
 * Fix a bug where the ParquetWriter throws "Size is greater than maximum int value" error when the table is large.
 * Add Prestissimo support to write Parquet table storage format.
 * Add support for the TTL of Alluxio SDK cache.
@@ -41,8 +41,8 @@ JDBC Changes
 ____________
 * Add cache support for JDBC metadata calls. This can be enabled by configuring parameter ``metadata-cache-ttl``, ``metadata-cache-refresh-interval`` and ``metadata-cache-size``.
 
-Native Connector Changes
-________________________
+Native Changes
+______________
 * Add TPC-DS tests for native execution based on Parquet files.
 
 Presto on Spark Changes

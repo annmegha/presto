@@ -20,6 +20,7 @@ import com.facebook.presto.common.block.BlockBuilder;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.metadata.MetadataManager;
 import com.facebook.presto.spi.plan.PlanNodeId;
+import com.facebook.presto.sql.analyzer.FeaturesConfig;
 import com.facebook.presto.sql.gen.JoinCompiler;
 import com.facebook.presto.testing.MaterializedResult;
 import com.google.common.collect.ImmutableList;
@@ -61,7 +62,7 @@ public class TestRowNumberOperator
 {
     private ExecutorService executor;
     private ScheduledExecutorService scheduledExecutor;
-    private JoinCompiler joinCompiler = new JoinCompiler(MetadataManager.createTestMetadataManager());
+    private JoinCompiler joinCompiler = new JoinCompiler(MetadataManager.createTestMetadataManager(), new FeaturesConfig());
 
     @BeforeClass
     public void setUp()

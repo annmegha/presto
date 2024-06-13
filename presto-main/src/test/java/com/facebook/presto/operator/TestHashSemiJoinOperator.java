@@ -20,6 +20,7 @@ import com.facebook.presto.common.type.Type;
 import com.facebook.presto.operator.HashSemiJoinOperator.HashSemiJoinOperatorFactory;
 import com.facebook.presto.operator.SetBuilderOperator.SetBuilderOperatorFactory;
 import com.facebook.presto.spi.plan.PlanNodeId;
+import com.facebook.presto.sql.analyzer.FeaturesConfig;
 import com.facebook.presto.sql.gen.JoinCompiler;
 import com.facebook.presto.testing.MaterializedResult;
 import com.google.common.collect.ImmutableList;
@@ -112,7 +113,7 @@ public class TestHashSemiJoinOperator
                 0,
                 rowPagesBuilder.getHashChannel(),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
         Operator setBuilderOperator = setBuilderOperatorFactory.createOperator(driverContext);
 
         Driver driver = Driver.createDriver(driverContext, buildOperator, setBuilderOperator);
@@ -176,7 +177,7 @@ public class TestHashSemiJoinOperator
                 0,
                 rowPagesBuilder.getHashChannel(),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
         Operator setBuilderOperator = setBuilderOperatorFactory.createOperator(driverContext);
 
         Driver driver = Driver.createDriver(driverContext, buildOperator, setBuilderOperator);
@@ -231,7 +232,7 @@ public class TestHashSemiJoinOperator
                 0,
                 Optional.of(1),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
 
         // run test
         GroupByHashYieldAssertion.GroupByHashYieldResult result = finishOperatorWithYieldingGroupByHash(
@@ -270,7 +271,7 @@ public class TestHashSemiJoinOperator
                 0,
                 rowPagesBuilder.getHashChannel(),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
         Operator setBuilderOperator = setBuilderOperatorFactory.createOperator(driverContext);
 
         Driver driver = Driver.createDriver(driverContext, buildOperator, setBuilderOperator);
@@ -325,7 +326,7 @@ public class TestHashSemiJoinOperator
                 0,
                 rowPagesBuilder.getHashChannel(),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
         Operator setBuilderOperator = setBuilderOperatorFactory.createOperator(driverContext);
 
         Driver driver = Driver.createDriver(driverContext, buildOperator, setBuilderOperator);
@@ -384,7 +385,7 @@ public class TestHashSemiJoinOperator
                 0,
                 rowPagesBuilder.getHashChannel(),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
         Operator setBuilderOperator = setBuilderOperatorFactory.createOperator(driverContext);
 
         Driver driver = Driver.createDriver(driverContext, buildOperator, setBuilderOperator);
@@ -441,7 +442,7 @@ public class TestHashSemiJoinOperator
                 0,
                 rowPagesBuilder.getHashChannel(),
                 10,
-                new JoinCompiler(createTestMetadataManager()));
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()));
         Operator setBuilderOperator = setBuilderOperatorFactory.createOperator(driverContext);
 
         Driver driver = Driver.createDriver(driverContext, buildOperator, setBuilderOperator);

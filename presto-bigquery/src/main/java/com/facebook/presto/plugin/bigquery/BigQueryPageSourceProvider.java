@@ -14,7 +14,6 @@
 package com.facebook.presto.plugin.bigquery;
 
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorPageSource;
 import com.facebook.presto.spi.ConnectorSession;
@@ -52,8 +51,7 @@ public class BigQueryPageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle layout,
             List<ColumnHandle> columns,
-            SplitContext splitContext,
-            RuntimeStats runtimeStats)
+            SplitContext splitContext)
     {
         BigQuerySplit bigQuerySplit = (BigQuerySplit) split;
         if (bigQuerySplit.representsEmptyProjection()) {

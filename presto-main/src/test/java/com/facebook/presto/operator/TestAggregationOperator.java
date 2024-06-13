@@ -142,7 +142,7 @@ public class TestAggregationOperator
                 ImmutableList.of(),
                 null,
                 true, // distinct
-                new JoinCompiler(MetadataManager.createTestMetadataManager()),
+                new JoinCompiler(MetadataManager.createTestMetadataManager(), new FeaturesConfig()),
                 ImmutableList.of(),
                 false,
                 TEST_SESSION,

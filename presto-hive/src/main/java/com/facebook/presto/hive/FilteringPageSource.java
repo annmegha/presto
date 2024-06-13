@@ -246,11 +246,11 @@ public class FilteringPageSource
             return filter.testBoolean(type.getBoolean(block, position));
         }
 
-        if (type.equals(DOUBLE)) {
+        if (type == DOUBLE) {
             return filter.testDouble(longBitsToDouble(block.getLong(position)));
         }
 
-        if (type.equals(REAL)) {
+        if (type == REAL) {
             return filter.testFloat(intBitsToFloat(block.getInt(position)));
         }
 

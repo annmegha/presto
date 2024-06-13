@@ -13,13 +13,11 @@
  */
 package com.facebook.presto.sql.planner.planPrinter;
 
-import com.facebook.presto.operator.DynamicFilterStats;
 import com.facebook.presto.spi.plan.PlanNodeId;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 
 import java.util.Map;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -32,27 +30,21 @@ public class WindowPlanNodeStats
             PlanNodeId planNodeId,
             Duration planNodeScheduledTime,
             Duration planNodeCpuTime,
-            Duration planNodeBlockedWallTime,
-            Duration planNodeAddInputWallTime,
-            Duration planNodeGetOutputWallTime,
-            Duration planNodeFinishWallTime,
             long planNodeInputPositions,
             DataSize planNodeInputDataSize,
             long planNodeRawInputPositions,
             DataSize planNodeRawInputDataSize,
             long planNodeOutputPositions,
             DataSize planNodeOutputDataSize,
-            DataSize planNodePeakMemorySize,
             Map<String, OperatorInputStats> operatorInputStats,
             long planNodeNullJoinBuildKeyCount,
             long planNodeJoinBuildKeyCount,
             long planNodeNullJoinProbeKeyCount,
             long planNodeJoinProbeKeyCount,
-            Optional<DynamicFilterStats> dynamicFilterStats,
             WindowOperatorStats windowOperatorStats)
     {
-        super(planNodeId, planNodeScheduledTime, planNodeCpuTime, planNodeBlockedWallTime, planNodeAddInputWallTime, planNodeGetOutputWallTime, planNodeFinishWallTime, planNodeInputPositions, planNodeInputDataSize, planNodeRawInputPositions, planNodeRawInputDataSize,
-                planNodeOutputPositions, planNodeOutputDataSize, planNodePeakMemorySize, operatorInputStats, planNodeNullJoinBuildKeyCount, planNodeJoinBuildKeyCount, planNodeNullJoinProbeKeyCount, planNodeJoinProbeKeyCount, dynamicFilterStats);
+        super(planNodeId, planNodeScheduledTime, planNodeCpuTime, planNodeInputPositions, planNodeInputDataSize, planNodeRawInputPositions, planNodeRawInputDataSize,
+                planNodeOutputPositions, planNodeOutputDataSize, operatorInputStats, planNodeNullJoinBuildKeyCount, planNodeJoinBuildKeyCount, planNodeNullJoinProbeKeyCount, planNodeJoinProbeKeyCount);
         this.windowOperatorStats = windowOperatorStats;
     }
 
@@ -71,23 +63,17 @@ public class WindowPlanNodeStats
                 merged.getPlanNodeId(),
                 merged.getPlanNodeScheduledTime(),
                 merged.getPlanNodeCpuTime(),
-                merged.getPlanNodeBlockedWallTime(),
-                merged.getPlanNodeAddInputWallTime(),
-                merged.getPlanNodeGetOutputWallTime(),
-                merged.getPlanNodeFinishWallTime(),
                 merged.getPlanNodeInputPositions(),
                 merged.getPlanNodeInputDataSize(),
                 merged.getPlanNodeRawInputPositions(),
                 merged.getPlanNodeRawInputDataSize(),
                 merged.getPlanNodeOutputPositions(),
                 merged.getPlanNodeOutputDataSize(),
-                merged.getPlanNodePeakMemorySize(),
                 merged.operatorInputStats,
                 merged.getPlanNodeNullJoinBuildKeyCount(),
                 merged.getPlanNodeJoinBuildKeyCount(),
                 merged.getPlanNodeNullJoinProbeKeyCount(),
                 merged.getPlanNodeJoinProbeKeyCount(),
-                merged.getDynamicFilterStats(),
                 windowOperatorStats);
     }
 }

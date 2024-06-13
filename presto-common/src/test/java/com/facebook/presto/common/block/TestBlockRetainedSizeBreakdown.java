@@ -176,7 +176,7 @@ public class TestBlockRetainedSizeBreakdown
         if (type == VARCHAR) {
             return String.valueOf(value);
         }
-        if (type.equals(DOUBLE)) {
+        if (type == DOUBLE) {
             return (double) value;
         }
         throw new UnsupportedOperationException();

@@ -15,7 +15,6 @@ package com.facebook.presto.hive;
 
 import com.facebook.presto.cache.CacheConfig;
 import com.facebook.presto.common.Page;
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.common.Subfield;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.TestingTypeManager;
@@ -318,15 +317,13 @@ public class TestHivePageSourceProvider
     public void testUsesPageSourceForPartition()
     {
         HivePageSourceProvider pageSourceProvider = createPageSourceProvider();
-        RuntimeStats runtimeStats = new RuntimeStats();
         ConnectorPageSource pageSource = pageSourceProvider.createPageSource(
                 new HiveTransactionHandle(),
                 SESSION,
                 getHiveSplit(ORC),
                 getHiveTableLayout(false, false, false),
                 ImmutableList.of(LONG_COLUMN),
-                new SplitContext(false),
-                runtimeStats);
+                new SplitContext(false));
         assertTrue(pageSource instanceof HivePageSource, format("pageSource was %s", pageSource.getClass().getSimpleName()));
         assertTrue(((HivePageSource) pageSource).getPageSource() instanceof MockOrcBatchPageSource,
                 format("pageSoruce was %s", ((HivePageSource) pageSource).getPageSource().getClass().getSimpleName()));
@@ -337,8 +334,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(RCBINARY),
                 getHiveTableLayout(false, false, false),
                 ImmutableList.of(LONG_COLUMN),
-                new SplitContext(false),
-                runtimeStats);
+                new SplitContext(false));
         assertTrue(pageSource instanceof HivePageSource, format("pageSource  was %s", pageSource.getClass().getSimpleName()));
         assertTrue(((HivePageSource) pageSource).getPageSource() instanceof MockRcBinaryBatchPageSource,
                 format("pageSource  was %s", ((HivePageSource) pageSource).getPageSource().getClass().getSimpleName()));
@@ -349,8 +345,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(ORC),
                 getHiveTableLayout(true, false, false),
                 ImmutableList.of(LONG_COLUMN),
-                new SplitContext(false),
-                runtimeStats);
+                new SplitContext(false));
         assertTrue(pageSource instanceof MockOrcSelectivePageSource, format("pageSource  was %s", pageSource.getClass().getSimpleName()));
     }
 
@@ -364,8 +359,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(RCBINARY),
                 getHiveTableLayout(true, false, false),
                 ImmutableList.of(),
-                new SplitContext(false),
-                new RuntimeStats());
+                new SplitContext(false));
         assertTrue(pageSource instanceof FilteringPageSource, format("pageSource was %s", pageSource.getClass().getSimpleName()));
     }
 
@@ -379,8 +373,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(ORC),
                 getHiveTableLayout(true, true, false),
                 ImmutableList.of(LONG_AGGREGATED_COLUMN),
-                new SplitContext(false),
-                new RuntimeStats());
+                new SplitContext(false));
         assertTrue(pageSource instanceof MockOrcAggregatedPageSource, format("pageSource %s", pageSource.getClass().getSimpleName()));
     }
 
@@ -396,8 +389,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(RCBINARY),
                 getHiveTableLayout(false, true, false),
                 ImmutableList.of(LONG_AGGREGATED_COLUMN),
-                new SplitContext(false),
-                new RuntimeStats());
+                new SplitContext(false));
     }
 
     @Test(expectedExceptions = PrestoException.class,
@@ -413,8 +405,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(ORC),
                 getHiveTableLayout(false, true, true),
                 ImmutableList.of(LONG_AGGREGATED_COLUMN),
-                new SplitContext(false),
-                new RuntimeStats());
+                new SplitContext(false));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not all columns are of 'AGGREGATED' type")
@@ -427,8 +418,7 @@ public class TestHivePageSourceProvider
                 getHiveSplit(ORC),
                 getHiveTableLayout(false, true, false),
                 ImmutableList.of(LONG_COLUMN, LONG_AGGREGATED_COLUMN),
-                new SplitContext(false),
-                new RuntimeStats());
+                new SplitContext(false));
     }
 
     @Test
@@ -442,8 +432,7 @@ public class TestHivePageSourceProvider
                 hiveSplit,
                 getHiveTableLayout(false, true, false),
                 ImmutableList.of(LONG_COLUMN, HiveColumnHandle.rowIdColumnHandle()),
-                new SplitContext(false),
-                new RuntimeStats())) {
+                new SplitContext(false))) {
             assertEquals(0, pageSource.getCompletedBytes());
         }
     }
@@ -458,8 +447,7 @@ public class TestHivePageSourceProvider
                 hiveSplit,
                 getHiveTableLayout(false, true, false),
                 ImmutableList.of(LONG_COLUMN, HiveColumnHandle.rowIdColumnHandle()),
-                new SplitContext(false),
-                new RuntimeStats());
+                new SplitContext(false));
     }
 
     private static ConnectorTableLayoutHandle getHiveTableLayout(boolean pushdownFilterEnabled, boolean partialAggregationsPushedDown, boolean footerStatsUnreliable)

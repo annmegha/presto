@@ -13,7 +13,6 @@
  */
 package com.facebook.presto.pinot;
 
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.pinot.auth.PinotBrokerAuthenticationProvider;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorId;
@@ -74,8 +73,7 @@ public class PinotPageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle tableLayoutHandle,
             List<ColumnHandle> columns,
-            SplitContext splitContext,
-            RuntimeStats runtimeStats)
+            SplitContext splitContext)
     {
         requireNonNull(split, "split is null");
 

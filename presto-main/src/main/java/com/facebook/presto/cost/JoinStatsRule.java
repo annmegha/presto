@@ -33,8 +33,6 @@ import java.util.Optional;
 import java.util.Queue;
 
 import static com.facebook.presto.SystemSessionProperties.getDefaultJoinSelectivityCoefficient;
-import static com.facebook.presto.SystemSessionProperties.shouldOptimizerUseHistograms;
-import static com.facebook.presto.cost.DisjointRangeDomainHistogram.addConjunction;
 import static com.facebook.presto.cost.FilterStatsCalculator.UNKNOWN_FILTER_COEFFICIENT;
 import static com.facebook.presto.cost.VariableStatsEstimate.buildFrom;
 import static com.facebook.presto.expressions.LogicalRowExpressions.extractConjuncts;
@@ -221,14 +219,13 @@ public class JoinStatsRule
     {
         ComparisonExpression drivingPredicate = new ComparisonExpression(EQUAL, new SymbolReference(getNodeLocation(drivingClause.getLeft().getSourceLocation()), drivingClause.getLeft().getName()), new SymbolReference(getNodeLocation(drivingClause.getRight().getSourceLocation()), drivingClause.getRight().getName()));
         PlanNodeStatsEstimate filteredStats = filterStatsCalculator.filterStats(stats, drivingPredicate, session, types);
-        boolean useHistograms = shouldOptimizerUseHistograms(session);
         for (EquiJoinClause clause : remainingClauses) {
-            filteredStats = filterByAuxiliaryClause(filteredStats, clause, useHistograms);
+            filteredStats = filterByAuxiliaryClause(filteredStats, clause);
         }
         return filteredStats;
     }
 
-    private PlanNodeStatsEstimate filterByAuxiliaryClause(PlanNodeStatsEstimate stats, EquiJoinClause clause, boolean useHistograms)
+    private PlanNodeStatsEstimate filterByAuxiliaryClause(PlanNodeStatsEstimate stats, EquiJoinClause clause)
     {
         // we just clear null fraction and adjust ranges here
         // selectivity is mostly handled by driving clause. We just scale heuristically by UNKNOWN_FILTER_COEFFICIENT here.
@@ -245,26 +242,22 @@ public class JoinStatsRule
         double rightNdvInRange = rightFilterValue * rightRange.getDistinctValuesCount();
         double retainedNdv = MoreMath.min(leftNdvInRange, rightNdvInRange);
 
-        VariableStatsEstimate.Builder newLeftStats = buildFrom(leftStats)
+        VariableStatsEstimate newLeftStats = buildFrom(leftStats)
                 .setNullsFraction(0)
                 .setStatisticsRange(intersect)
-                .setDistinctValuesCount(retainedNdv);
-        if (useHistograms) {
-            newLeftStats.setHistogram(leftStats.getHistogram().map(leftHistogram -> addConjunction(leftHistogram, intersect)));
-        }
+                .setDistinctValuesCount(retainedNdv)
+                .build();
 
-        VariableStatsEstimate.Builder newRightStats = buildFrom(rightStats)
+        VariableStatsEstimate newRightStats = buildFrom(rightStats)
                 .setNullsFraction(0)
                 .setStatisticsRange(intersect)
-                .setDistinctValuesCount(retainedNdv);
-        if (useHistograms) {
-            newRightStats.setHistogram(rightStats.getHistogram().map(rightHistogram -> addConjunction(rightHistogram, intersect)));
-        }
+                .setDistinctValuesCount(retainedNdv)
+                .build();
 
         PlanNodeStatsEstimate.Builder result = PlanNodeStatsEstimate.buildFrom(stats)
                 .setOutputRowCount(stats.getOutputRowCount() * UNKNOWN_FILTER_COEFFICIENT)
-                .addVariableStatistics(clause.getLeft(), newLeftStats.build())
-                .addVariableStatistics(clause.getRight(), newRightStats.build());
+                .addVariableStatistics(clause.getLeft(), newLeftStats)
+                .addVariableStatistics(clause.getRight(), newRightStats);
         return normalizer.normalize(result.build());
     }
 

@@ -138,7 +138,7 @@ public class ElasticsearchLoader
             if (type == INTEGER) {
                 return ((Number) value).intValue();
             }
-            if (type.equals(DOUBLE)) {
+            if (type == DOUBLE) {
                 return ((Number) value).doubleValue();
             }
             throw new IllegalArgumentException("Unhandled type: " + type);

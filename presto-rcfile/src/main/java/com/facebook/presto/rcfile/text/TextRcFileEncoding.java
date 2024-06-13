@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class TextRcFileEncoding
         implements RcFileEncoding
 {
-    public static final byte[] DEFAULT_SEPARATORS = {
+    public static final byte[] DEFAULT_SEPARATORS = new byte[] {
             1,  // Start of Heading
             2,  // Start of text
             3,  // End of Text

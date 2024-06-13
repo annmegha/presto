@@ -14,7 +14,6 @@
 package com.facebook.presto.split;
 
 import com.facebook.presto.Session;
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.metadata.Split;
 import com.facebook.presto.spi.ColumnHandle;
@@ -55,7 +54,7 @@ public class PageSourceManager
     }
 
     @Override
-    public ConnectorPageSource createPageSource(Session session, Split split, TableHandle table, List<ColumnHandle> columns, RuntimeStats runtimeStats)
+    public ConnectorPageSource createPageSource(Session session, Split split, TableHandle table, List<ColumnHandle> columns)
     {
         requireNonNull(split, "split is null");
         requireNonNull(columns, "columns is null");
@@ -84,8 +83,7 @@ public class PageSourceManager
                     split.getConnectorSplit(),
                     table.getLayout().get(),
                     columns,
-                    split.getSplitContext(),
-                    runtimeStats);
+                    split.getSplitContext());
         }
         return getPageSourceProvider(split).createPageSource(split.getTransactionHandle(), connectorSession, split.getConnectorSplit(), columns, split.getSplitContext());
     }

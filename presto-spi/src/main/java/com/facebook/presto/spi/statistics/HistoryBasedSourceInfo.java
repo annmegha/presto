@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.HIGH;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -72,9 +71,9 @@ public class HistoryBasedSourceInfo
     }
 
     @Override
-    public ConfidenceLevel confidenceLevel()
+    public boolean isConfident()
     {
-        return HIGH;
+        return true;
     }
 
     @Override

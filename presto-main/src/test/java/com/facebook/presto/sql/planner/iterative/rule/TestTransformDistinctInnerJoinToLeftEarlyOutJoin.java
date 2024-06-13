@@ -38,7 +38,6 @@ import static com.facebook.presto.SystemSessionProperties.JOIN_REORDERING_STRATE
 import static com.facebook.presto.common.type.BigintType.BIGINT;
 import static com.facebook.presto.spi.plan.AggregationNode.Step.SINGLE;
 import static com.facebook.presto.spi.plan.JoinType.INNER;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.FACT;
 import static com.facebook.presto.sql.analyzer.FeaturesConfig.JoinReorderingStrategy.AUTOMATIC;
 import static com.facebook.presto.sql.planner.assertions.PlanMatchPattern.aggregation;
 import static com.facebook.presto.sql.planner.assertions.PlanMatchPattern.assignUniqueId;
@@ -84,12 +83,12 @@ public class TestTransformDistinctInnerJoinToLeftEarlyOutJoin
                 })
                 .overrideStats("valuesA", PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .addVariableStatistics(variable("a", BIGINT), new VariableStatsEstimate(0, 1000, 0, 8, 100))
                         .build())
                 .overrideStats("valuesB", PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(100)
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .addVariableStatistics(variable("b", BIGINT), new VariableStatsEstimate(0, 1000, 0, 8, 10))
                         .build())
                 .matches(aggregation(ImmutableMap.of(),
@@ -125,12 +124,12 @@ public class TestTransformDistinctInnerJoinToLeftEarlyOutJoin
                 })
                 .overrideStats("valuesA", PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .addVariableStatistics(variable("a", BIGINT), new VariableStatsEstimate(0, 1000, 0, 8, 100))
                         .build())
                 .overrideStats("valuesB", PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(100)
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .addVariableStatistics(variable("b", BIGINT), new VariableStatsEstimate(0, 1000, 0, 8, 10))
                         .addVariableStatistics(variable("c", BIGINT), new VariableStatsEstimate(0, 1000, 0, 8, 10))
                         .build())

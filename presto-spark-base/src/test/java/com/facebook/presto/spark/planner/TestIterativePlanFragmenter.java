@@ -421,7 +421,7 @@ public class TestIterativePlanFragmenter
         private final PartitioningScheme partitioningScheme;
         private final StageExecutionDescriptor stageExecutionDescriptor;
         private final boolean outputTableWriterFragment;
-        private final Optional<StatsAndCosts> statsAndCosts;
+        private final StatsAndCosts statsAndCosts;
 
         public CanonicalTestFragment(
                 Class<PlanNode> clazz,
@@ -433,7 +433,7 @@ public class TestIterativePlanFragmenter
                 PartitioningScheme partitioningScheme,
                 StageExecutionDescriptor stageExecutionDescriptor,
                 boolean outputTableWriterFragment,
-                Optional<StatsAndCosts> statsAndCosts)
+                StatsAndCosts statsAndCosts)
         {
             this.clazz = requireNonNull(clazz, "clazz is null");
             this.variables = ImmutableSet.copyOf(requireNonNull(variables, "variables is null"));

@@ -14,7 +14,6 @@
 
 package com.facebook.presto.hudi;
 
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.TypeManager;
@@ -76,8 +75,7 @@ public class HudiPageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle layoutHandle,
             List<ColumnHandle> columns,
-            SplitContext splitContext,
-            RuntimeStats runtimeStats)
+            SplitContext splitContext)
     {
         HudiTableLayoutHandle layout = (HudiTableLayoutHandle) layoutHandle;
         HudiSplit hudiSplit = (HudiSplit) split;

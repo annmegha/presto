@@ -100,7 +100,7 @@ public final class ValuesNode
     @Override
     public List<PlanNode> getSources()
     {
-        return emptyList();
+        return unmodifiableList(emptyList());
     }
 
     @Override

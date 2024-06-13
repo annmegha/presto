@@ -37,6 +37,7 @@ public class AggregationTestInput
     private final int offset;
     private final boolean isReversed;
 
+    @SuppressWarnings("NumericCastThatLosesPrecision")
     public AggregationTestInput(JavaAggregationFunctionImplementation function, Page[] pages, int offset, boolean isReversed)
     {
         this.pages = pages;

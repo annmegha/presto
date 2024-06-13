@@ -180,7 +180,7 @@ public abstract class BaseTestHiveInsertOverwrite
                         "    comment varchar(152),  " +
                         "    nationkey bigint, " +
                         "    regionkey bigint) " +
-                        (propertiesEntries.isEmpty() ? "" : propertiesEntries
+                        (propertiesEntries.size() < 1 ? "" : propertiesEntries
                                 .stream()
                                 .collect(joining(",", "WITH (", ")"))),
                 tableName);

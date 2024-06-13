@@ -17,7 +17,6 @@ import com.facebook.presto.spi.SourceLocation;
 import com.facebook.presto.spi.plan.PlanNode;
 import com.facebook.presto.spi.plan.PlanNodeId;
 import com.facebook.presto.spi.relation.VariableReferenceExpression;
-import com.facebook.presto.sql.tree.ExplainFormat.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
@@ -37,7 +36,6 @@ public class ExplainAnalyzeNode
     private final PlanNode source;
     private final VariableReferenceExpression outputVariable;
     private final boolean verbose;
-    private final Type format;
 
     @JsonCreator
     public ExplainAnalyzeNode(
@@ -45,10 +43,9 @@ public class ExplainAnalyzeNode
             @JsonProperty("id") PlanNodeId id,
             @JsonProperty("source") PlanNode source,
             @JsonProperty("outputVariable") VariableReferenceExpression outputVariable,
-            @JsonProperty("verbose") boolean verbose,
-            @JsonProperty("format") Type format)
+            @JsonProperty("verbose") boolean verbose)
     {
-        this(sourceLocation, id, Optional.empty(), source, outputVariable, verbose, format);
+        this(sourceLocation, id, Optional.empty(), source, outputVariable, verbose);
     }
 
     public ExplainAnalyzeNode(
@@ -57,14 +54,12 @@ public class ExplainAnalyzeNode
             Optional<PlanNode> statsEquivalentPlanNode,
             PlanNode source,
             VariableReferenceExpression outputVariable,
-            boolean verbose,
-            Type format)
+            boolean verbose)
     {
         super(sourceLocation, id, statsEquivalentPlanNode);
         this.source = requireNonNull(source, "source is null");
         this.outputVariable = requireNonNull(outputVariable, "outputVariable is null");
         this.verbose = verbose;
-        this.format = requireNonNull(format, "options is null");
     }
 
     @JsonProperty("outputVariable")
@@ -83,12 +78,6 @@ public class ExplainAnalyzeNode
     public boolean isVerbose()
     {
         return verbose;
-    }
-
-    @JsonProperty("format")
-    public Type getFormat()
-    {
-        return format;
     }
 
     @Override
@@ -112,12 +101,12 @@ public class ExplainAnalyzeNode
     @Override
     public PlanNode replaceChildren(List<PlanNode> newChildren)
     {
-        return new ExplainAnalyzeNode(getSourceLocation(), getId(), getStatsEquivalentPlanNode(), Iterables.getOnlyElement(newChildren), outputVariable, isVerbose(), format);
+        return new ExplainAnalyzeNode(getSourceLocation(), getId(), getStatsEquivalentPlanNode(), Iterables.getOnlyElement(newChildren), outputVariable, isVerbose());
     }
 
     @Override
     public PlanNode assignStatsEquivalentPlanNode(Optional<PlanNode> statsEquivalentPlanNode)
     {
-        return new ExplainAnalyzeNode(getSourceLocation(), getId(), statsEquivalentPlanNode, source, outputVariable, isVerbose(), format);
+        return new ExplainAnalyzeNode(getSourceLocation(), getId(), statsEquivalentPlanNode, source, outputVariable, isVerbose());
     }
 }

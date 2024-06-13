@@ -30,8 +30,6 @@ import static com.facebook.presto.SystemSessionProperties.USE_PARTIAL_AGGREGATIO
 import static com.facebook.presto.common.type.DoubleType.DOUBLE;
 import static com.facebook.presto.spi.plan.AggregationNode.Step.PARTIAL;
 import static com.facebook.presto.spi.plan.AggregationNode.Step.SINGLE;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.FACT;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.LOW;
 import static com.facebook.presto.sql.planner.assertions.PlanMatchPattern.aggregation;
 import static com.facebook.presto.sql.planner.assertions.PlanMatchPattern.exchange;
 import static com.facebook.presto.sql.planner.assertions.PlanMatchPattern.functionCall;
@@ -108,7 +106,7 @@ public class TestPushPartialAggregationThroughExchange
                 .overrideStats("values", PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
                         .addVariableStatistics(variable("b", DOUBLE), new VariableStatsEstimate(0, 100, 0, 8, 800))
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .build())
                 .doesNotFire();
     }
@@ -122,7 +120,7 @@ public class TestPushPartialAggregationThroughExchange
                 .on(p -> constructAggregation(p))
                 .overrideStats("aggregation", PlanNodeStatsEstimate.builder()
                         .addVariableStatistics(variable("b", DOUBLE), new VariableStatsEstimate(0, 100, 0, 8, 800))
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .setPartialAggregationStatsEstimate(new PartialAggregationStatsEstimate(1000, 800, 10, 10))
                         .build())
                 .doesNotFire();
@@ -138,7 +136,7 @@ public class TestPushPartialAggregationThroughExchange
                 .on(p -> constructAggregation(p))
                 .overrideStats("aggregation", PlanNodeStatsEstimate.builder()
                         .addVariableStatistics(variable("b", DOUBLE), new VariableStatsEstimate(0, 100, 0, 8, 800))
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .setPartialAggregationStatsEstimate(new PartialAggregationStatsEstimate(1000, 300, 10, 10))
                         .build())
                 .doesNotFire();
@@ -153,7 +151,7 @@ public class TestPushPartialAggregationThroughExchange
                 .on(p -> constructAggregation(p))
                 .overrideStats("aggregation", PlanNodeStatsEstimate.builder()
                         .addVariableStatistics(variable("b", DOUBLE), new VariableStatsEstimate(0, 100, 0, 8, 800))
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .setPartialAggregationStatsEstimate(new PartialAggregationStatsEstimate(0, 300, 10, 8))
                         .build())
                 .doesNotFire();
@@ -168,7 +166,7 @@ public class TestPushPartialAggregationThroughExchange
                 .on(p -> constructAggregation(p))
                 .overrideStats("aggregation", PlanNodeStatsEstimate.builder()
                         .addVariableStatistics(variable("b", DOUBLE), new VariableStatsEstimate(0, 100, 0, 8, 800))
-                        .setConfidence(FACT)
+                        .setConfident(true)
                         .setPartialAggregationStatsEstimate(new PartialAggregationStatsEstimate(0, 300, 10, 1))
                         .build())
                 .matches(aggregation(ImmutableMap.of("sum", functionCall("sum", ImmutableList.of("sum0"))),
@@ -199,7 +197,7 @@ public class TestPushPartialAggregationThroughExchange
                 .overrideStats("values", PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
                         .addVariableStatistics(variable("b", DOUBLE), new VariableStatsEstimate(0, 100, 0, 8, 800))
-                        .setConfidence(LOW)
+                        .setConfident(false)
                         .build())
                 .matches(exchange(
                         project(

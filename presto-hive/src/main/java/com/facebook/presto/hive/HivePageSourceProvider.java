@@ -13,7 +13,6 @@
  */
 package com.facebook.presto.hive;
 
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.common.Subfield;
 import com.facebook.presto.common.Subfield.NestedField;
 import com.facebook.presto.common.Subfield.PathElement;
@@ -138,8 +137,7 @@ public class HivePageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle layout,
             List<ColumnHandle> columns,
-            SplitContext splitContext,
-            RuntimeStats runtimeStats)
+            SplitContext splitContext)
     {
         HiveTableLayoutHandle hiveLayout = (HiveTableLayoutHandle) layout;
 
@@ -169,8 +167,7 @@ public class HivePageSourceProvider
                 OptionalLong.of(hiveSplit.getFileSplit().getStart()),
                 OptionalLong.of(hiveSplit.getFileSplit().getLength()),
                 hiveSplit.getFileSplit().getFileModifiedTime(),
-                HiveSessionProperties.isVerboseRuntimeStatsEnabled(session),
-                runtimeStats);
+                HiveSessionProperties.isVerboseRuntimeStatsEnabled(session));
 
         if (columns.stream().anyMatch(columnHandle -> ((HiveColumnHandle) columnHandle).getColumnType().equals(AGGREGATED))) {
             checkArgument(columns.stream().allMatch(columnHandle -> ((HiveColumnHandle) columnHandle).getColumnType().equals(AGGREGATED)), "Not all columns are of 'AGGREGATED' type");

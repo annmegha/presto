@@ -24,10 +24,8 @@ import com.facebook.presto.sql.planner.plan.ExchangeNode;
 import java.util.List;
 import java.util.Optional;
 
-import static com.facebook.presto.SystemSessionProperties.shouldOptimizerUseHistograms;
 import static com.facebook.presto.cost.PlanNodeStatsEstimate.buildFrom;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.FACT;
+import static com.facebook.presto.cost.PlanNodeStatsEstimateMath.addStatsAndMaxDistinctValues;
 import static com.facebook.presto.sql.planner.plan.Patterns.exchange;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
@@ -53,20 +51,19 @@ public class ExchangeStatsRule
     {
         Optional<PlanNodeStatsEstimate> estimate = Optional.empty();
         double totalSize = 0;
-        ConfidenceLevel confidenceLevel = FACT;
+        boolean confident = true;
         for (int i = 0; i < node.getSources().size(); i++) {
             PlanNode source = node.getSources().get(i);
             PlanNodeStatsEstimate sourceStats = statsProvider.getStats(source);
             totalSize += sourceStats.getOutputSizeInBytes();
-            if (sourceStats.confidenceLevel().ordinal() < confidenceLevel.ordinal()) {
-                confidenceLevel = sourceStats.confidenceLevel();
+            if (!sourceStats.isConfident()) {
+                confident = false;
             }
 
             PlanNodeStatsEstimate sourceStatsWithMappedSymbols = mapToOutputVariables(sourceStats, node.getInputs().get(i), node.getOutputVariables());
 
             if (estimate.isPresent()) {
-                PlanNodeStatsEstimateMath calculator = new PlanNodeStatsEstimateMath(shouldOptimizerUseHistograms(session));
-                estimate = Optional.of(calculator.addStatsAndMaxDistinctValues(estimate.get(), sourceStatsWithMappedSymbols));
+                estimate = Optional.of(addStatsAndMaxDistinctValues(estimate.get(), sourceStatsWithMappedSymbols));
             }
             else {
                 estimate = Optional.of(sourceStatsWithMappedSymbols);
@@ -76,7 +73,7 @@ public class ExchangeStatsRule
         verify(estimate.isPresent());
         return Optional.of(buildFrom(estimate.get())
                 .setTotalSize(totalSize)
-                .setConfidence(confidenceLevel)
+                .setConfident(confident)
                 .build());
     }
 

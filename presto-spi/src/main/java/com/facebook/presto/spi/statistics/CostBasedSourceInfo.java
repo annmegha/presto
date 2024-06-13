@@ -19,11 +19,11 @@ package com.facebook.presto.spi.statistics;
 public class CostBasedSourceInfo
         extends SourceInfo
 {
-    private ConfidenceLevel confidenceLevel;
+    private boolean confident;
 
-    public CostBasedSourceInfo(ConfidenceLevel confidenceLevel)
+    public CostBasedSourceInfo(boolean confident)
     {
-        this.confidenceLevel = confidenceLevel;
+        this.confident = confident;
     }
 
     @Override
@@ -45,9 +45,9 @@ public class CostBasedSourceInfo
     }
 
     @Override
-    public ConfidenceLevel confidenceLevel()
+    public boolean isConfident()
     {
-        return confidenceLevel;
+        return confident;
     }
 
     @Override

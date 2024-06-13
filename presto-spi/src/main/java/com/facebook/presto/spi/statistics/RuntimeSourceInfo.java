@@ -13,8 +13,6 @@
  */
 package com.facebook.presto.spi.statistics;
 
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.HIGH;
-
 /**
  * Describes plan statistics which are derived at runtime.
  */
@@ -42,9 +40,9 @@ public class RuntimeSourceInfo
     }
 
     @Override
-    public ConfidenceLevel confidenceLevel()
+    public boolean isConfident()
     {
-        return HIGH;
+        return true;
     }
 
     @Override

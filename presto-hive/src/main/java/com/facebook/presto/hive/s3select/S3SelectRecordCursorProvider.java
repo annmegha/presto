@@ -128,7 +128,7 @@ public class S3SelectRecordCursorProvider
         Set<String> projectedColumnNames = projectedColumns.stream().map(HiveColumnHandle::getName).collect(toImmutableSet());
         Set<String> schemaColumnNames;
         String columnNameProperty = schema.getProperty(LIST_COLUMNS);
-        if (columnNameProperty.isEmpty()) {
+        if (columnNameProperty.length() == 0) {
             schemaColumnNames = ImmutableSet.of();
         }
         else {

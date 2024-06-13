@@ -18,15 +18,15 @@ _______________
 * Add support for the following primitive types to Avro decoder: ``TINYINT``, ``SMALLINT``, ``INTEGER`` and ``REAL``.
 
 Hive Connector Changes
-______________________
+____________
 * Remove the configuration property ``hive.parquet.fail-on-corrupted-statistics`` and the session property ``parquet_fail_with_corrupted_statistics``.
 
 Iceberg Connector Changes
-_________________________
+_______________
 * Remove the configuration property ``iceberg.native-mode``. Use ``iceberg.catalog.type`` instead.
 
 Pinot Connector Changes
-_______________________
+_____________
 * Add support for Pinot ``TIMESTAMP`` and ``JSON`` types.
 * Add support for Pinot version 0.9.3.
 

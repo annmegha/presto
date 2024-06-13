@@ -17,6 +17,7 @@ import com.facebook.presto.RowPagesBuilder;
 import com.facebook.presto.common.Page;
 import com.facebook.presto.common.array.AdaptiveLongBigArray;
 import com.facebook.presto.metadata.MetadataManager;
+import com.facebook.presto.sql.analyzer.FeaturesConfig;
 import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
@@ -314,7 +315,8 @@ public class TestPositionLinks
                 ImmutableList.of(),
                 OptionalInt.empty(),
                 Optional.of(0),
-                MetadataManager.createTestMetadataManager().getFunctionAndTypeManager());
+                MetadataManager.createTestMetadataManager().getFunctionAndTypeManager(),
+                new FeaturesConfig().isGroupByUsesEqualTo());
     }
 
     private static AdaptiveLongBigArray addresses()

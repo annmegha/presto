@@ -83,7 +83,7 @@ public class TestPlanPrinter
                 new PartitioningScheme(Partitioning.create(SOURCE_DISTRIBUTION, ImmutableList.of()), ImmutableList.of(variable)),
                 StageExecutionDescriptor.ungroupedExecution(),
                 false,
-                Optional.of(StatsAndCosts.empty()),
+                StatsAndCosts.empty(),
                 Optional.empty());
 
         return PlanPrinter.textPlanFragment(testFragment, FUNCTION_AND_TYPE_MANAGER, TEST_SESSION, false);

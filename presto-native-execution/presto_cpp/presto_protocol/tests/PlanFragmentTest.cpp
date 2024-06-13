@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "presto_cpp/main/common/tests/test_json.h"
+#include "presto_cpp/presto_protocol/presto_protocol.h"
 
 namespace fs = boost::filesystem;
 

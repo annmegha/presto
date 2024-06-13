@@ -25,11 +25,9 @@ import static com.facebook.presto.common.type.RealType.REAL;
 import static com.facebook.presto.common.type.SmallintType.SMALLINT;
 import static com.facebook.presto.common.type.TinyintType.TINYINT;
 import static com.facebook.presto.common.type.VarcharType.VARCHAR;
-import static com.facebook.presto.spi.StandardErrorCode.INVALID_CAST_ARGUMENT;
 import static java.lang.Float.floatToIntBits;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Float.isNaN;
-import static java.lang.Float.parseFloat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -110,7 +108,6 @@ public class TestRealOperators
         assertFunction("REAL'-17.34' = REAL'-17.34'", BOOLEAN, true);
         assertFunction("REAL'71.17' = REAL'23.45'", BOOLEAN, false);
         assertFunction("REAL'-0.0' = REAL'0.0'", BOOLEAN, true);
-        assertFunction("CAST(nan() AS REAL) = CAST(nan() AS REAL)", BOOLEAN, true);
     }
 
     @Test
@@ -121,7 +118,6 @@ public class TestRealOperators
         assertFunction("REAL'-17.34' <> REAL'-17.34'", BOOLEAN, false);
         assertFunction("REAL'71.17' <> REAL'23.45'", BOOLEAN, true);
         assertFunction("REAL'-0.0' <> REAL'0.0'", BOOLEAN, false);
-        assertFunction("CAST(nan() AS REAL) <> CAST(nan() AS REAL)", BOOLEAN, false);
     }
 
     @Test
@@ -131,7 +127,6 @@ public class TestRealOperators
         assertFunction("REAL'-17.34' < REAL'-16.34'", BOOLEAN, true);
         assertFunction("REAL'71.17' < REAL'23.45'", BOOLEAN, false);
         assertFunction("REAL'-0.0' < REAL'0.0'", BOOLEAN, false);
-        assertFunction("-CAST(nan() AS REAL) < -CAST(INFINITY() AS REAL)", BOOLEAN, false);
     }
 
     @Test
@@ -141,8 +136,6 @@ public class TestRealOperators
         assertFunction("REAL'-17.34' <= REAL'-17.34'", BOOLEAN, true);
         assertFunction("REAL'71.17' <= REAL'23.45'", BOOLEAN, false);
         assertFunction("REAL'-0.0' <= REAL'0.0'", BOOLEAN, true);
-        assertFunction("-CAST(nan() AS REAL) <= -CAST(INFINITY() AS REAL)", BOOLEAN, false);
-        assertFunction("CAST(nan() AS REAL) <= CAST(nan() AS REAL)", BOOLEAN, true);
     }
 
     @Test
@@ -152,7 +145,6 @@ public class TestRealOperators
         assertFunction("REAL'-17.34' > REAL'-17.34'", BOOLEAN, false);
         assertFunction("REAL'71.17' > REAL'23.45'", BOOLEAN, true);
         assertFunction("REAL'-0.0' > REAL'0.0'", BOOLEAN, false);
-        assertFunction("CAST(nan() AS REAL) > CAST(infinity() AS REAL)", BOOLEAN, true);
     }
 
     @Test
@@ -162,8 +154,6 @@ public class TestRealOperators
         assertFunction("REAL'-17.34' >= REAL'-17.34'", BOOLEAN, true);
         assertFunction("REAL'71.17' >= REAL'23.45'", BOOLEAN, true);
         assertFunction("REAL'-0.0' >= REAL'0.0'", BOOLEAN, true);
-        assertFunction("CAST(nan() AS REAL) >= CAST(infinity() AS REAL)", BOOLEAN, true);
-        assertFunction("CAST(nan() AS REAL) >= CAST(nan() AS REAL)", BOOLEAN, true);
     }
 
     @Test
@@ -175,8 +165,6 @@ public class TestRealOperators
         assertFunction("REAL'0.0' BETWEEN REAL'-1.2' AND REAL'2.3'", BOOLEAN, true);
         assertFunction("REAL'56.78' BETWEEN REAL'12.34' AND REAL'34.56'", BOOLEAN, false);
         assertFunction("REAL'56.78' BETWEEN REAL'78.89' AND REAL'98.765'", BOOLEAN, false);
-        assertFunction("REAL '0.0' BETWEEN REAL '-0.0' AND REAL '-0.0'", BOOLEAN, true);
-        assertFunction("CAST(nan() AS REAL) BETWEEN CAST(nan() AS REAL) AND CAST(nan() AS REAL)", BOOLEAN, true);
     }
 
     @Test
@@ -195,11 +183,6 @@ public class TestRealOperators
         assertFunction("CAST(REAL'-754.2008' as BIGINT)", BIGINT, -754L);
         assertFunction("CAST(REAL'1.98' as BIGINT)", BIGINT, 2L);
         assertFunction("CAST(REAL'-0.0' as BIGINT)", BIGINT, 0L);
-
-        assertInvalidFunction("CAST(cast(nan() AS REAL) as BIGINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(infinity() AS REAL) as BIGINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(-infinity() AS REAL) as BIGINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(REAL '" + Float.MAX_VALUE + "' as BIGINT)", INVALID_CAST_ARGUMENT);
     }
 
     @Test
@@ -209,20 +192,6 @@ public class TestRealOperators
         assertFunction("CAST(REAL'-754.1985' AS INTEGER)", INTEGER, -754);
         assertFunction("CAST(REAL'9.99' AS INTEGER)", INTEGER, 10);
         assertFunction("CAST(REAL'-0.0' AS INTEGER)", INTEGER, 0);
-
-        assertFunction("cast(REAL '" + Math.nextDown(0x1.0p31f) + "' as integer)", INTEGER, (int) Math.nextDown(0x1.0p31f));
-        assertInvalidFunction("cast(REAL '" + 0x1.0p31 + "' as integer)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("cast(REAL '" + Math.nextUp(0x1.0p31f) + "' as integer)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("cast(REAL '" + Math.nextDown(-0x1.0p31f) + "' as integer)", INVALID_CAST_ARGUMENT);
-        assertFunction("cast(REAL '" + -0x1.0p31 + "' as integer)", INTEGER, (int) -0x1.0p31);
-        assertFunction("cast(REAL '" + Math.nextUp(-0x1.0p31f) + "' as integer)", INTEGER, (int) Math.nextUp(-0x1.0p31f));
-
-        assertInvalidFunction("cast(9.3E9 as integer)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("cast(-9.3E9 as integer)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(nan() AS REAL) as INTEGER)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(infinity() AS REAL) as INTEGER)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(-infinity() AS REAL) as INTEGER)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(REAL '" + (Integer.MAX_VALUE + 0.6) + "' as INTEGER)", INVALID_CAST_ARGUMENT);
     }
 
     @Test
@@ -232,10 +201,6 @@ public class TestRealOperators
         assertFunction("CAST(REAL'-754.1985' AS SMALLINT)", SMALLINT, (short) -754);
         assertFunction("CAST(REAL'9.99' AS SMALLINT)", SMALLINT, (short) 10);
         assertFunction("CAST(REAL'-0.0' AS SMALLINT)", SMALLINT, (short) 0);
-        assertInvalidFunction("CAST(cast(nan() AS REAL) as SMALLINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(infinity() AS REAL) as SMALLINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(-infinity() AS REAL) as SMALLINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(REAL '" + (Short.MAX_VALUE + 0.6) + "' as SMALLINT)", INVALID_CAST_ARGUMENT);
     }
 
     @Test
@@ -245,10 +210,6 @@ public class TestRealOperators
         assertFunction("CAST(REAL'-128.234' AS TINYINT)", TINYINT, (byte) -128);
         assertFunction("CAST(REAL'9.99' AS TINYINT)", TINYINT, (byte) 10);
         assertFunction("CAST(REAL'-0.0' AS TINYINT)", TINYINT, (byte) 0);
-        assertInvalidFunction("CAST(cast(nan() AS REAL) as TINYINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(infinity() AS REAL) as TINYINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(cast(-infinity() AS REAL) as TINYINT)", INVALID_CAST_ARGUMENT);
-        assertInvalidFunction("CAST(REAL '" + (Byte.MAX_VALUE + 0.6) + "' as TINYINT)", INVALID_CAST_ARGUMENT);
     }
 
     @Test
@@ -277,7 +238,6 @@ public class TestRealOperators
         assertFunction("REAL'37.7' IS DISTINCT FROM REAL'37.8'", BOOLEAN, true);
         assertFunction("NULL IS DISTINCT FROM REAL'37.7'", BOOLEAN, true);
         assertFunction("REAL'37.7' IS DISTINCT FROM NULL", BOOLEAN, true);
-        assertFunction("REAL '0.0' IS DISTINCT FROM REAL '-0.0'", BOOLEAN, false);
         assertFunction("CAST(nan() AS REAL) IS DISTINCT FROM CAST(nan() AS REAL)", BOOLEAN, false);
     }
 
@@ -297,13 +257,7 @@ public class TestRealOperators
         int[] nanRepresentations = {floatToIntBits(Float.NaN), 0xffc00000, 0x7fc00000, 0x7fc01234, 0xffc01234};
         for (int nanRepresentation : nanRepresentations) {
             assertTrue(isNaN(intBitsToFloat(nanRepresentation)));
-            assertEquals(RealComparisonOperators.hashCode(nanRepresentation), RealComparisonOperators.hashCode(nanRepresentations[0]));
+            assertEquals(RealOperators.hashCode(nanRepresentation), RealOperators.hashCode(nanRepresentations[0]));
         }
-    }
-
-    @Test
-    public void testZeroHash()
-    {
-        assertEquals(RealComparisonOperators.hashCode(floatToIntBits(0)), RealComparisonOperators.hashCode(floatToIntBits(parseFloat("-0.0"))));
     }
 }

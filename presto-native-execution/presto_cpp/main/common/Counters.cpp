@@ -43,8 +43,6 @@ void registerPrestoMetrics() {
       95,
       99,
       100);
-  DEFINE_METRIC(
-      kCounterHttpClientNumConnectionsCreated, facebook::velox::StatType::SUM);
   DEFINE_HISTOGRAM_METRIC(
       kCounterPrestoExchangeSerializedPageSize,
       10000,

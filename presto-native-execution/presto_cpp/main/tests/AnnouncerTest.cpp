@@ -173,7 +173,6 @@ TEST_P(AnnouncerTestSuite, basic) {
       "testing",
       "test-node",
       "test-node-location",
-      true,
       {"hive", "tpch"},
       500 /*milliseconds*/,
       useHttps ? sslContext_ : nullptr);

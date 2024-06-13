@@ -203,6 +203,7 @@ import static com.facebook.presto.hive.HivePartitioningHandle.createHiveCompatib
 import static com.facebook.presto.hive.HivePartitioningHandle.createPrestoNativePartitioningHandle;
 import static com.facebook.presto.hive.HiveSessionProperties.HIVE_STORAGE_FORMAT;
 import static com.facebook.presto.hive.HiveSessionProperties.RESPECT_TABLE_FORMAT;
+import static com.facebook.presto.hive.HiveSessionProperties.getBucketFunctionTypeForCteMaterialization;
 import static com.facebook.presto.hive.HiveSessionProperties.getBucketFunctionTypeForExchange;
 import static com.facebook.presto.hive.HiveSessionProperties.getCompressionCodec;
 import static com.facebook.presto.hive.HiveSessionProperties.getHiveStorageFormat;
@@ -2946,6 +2947,13 @@ public class HiveMetadata
                 .setBucketHandle(Optional.of(updatedBucketHandle))
                 .build();
     }
+
+    @Override
+    public ConnectorPartitioningHandle getPartitioningHandleForCteMaterialization(ConnectorSession session, int partitionCount, List<Type> partitionTypes)
+    {
+        return getHivePartitionHandle(session, partitionCount, partitionTypes, getBucketFunctionTypeForCteMaterialization(session));
+    }
+
     @Override
     public ConnectorPartitioningHandle getPartitioningHandleForExchange(ConnectorSession session, int partitionCount, List<Type> partitionTypes)
     {
@@ -2993,7 +3001,7 @@ public class HiveMetadata
         Table table = metastore.getTable(metastoreContext, hiveTableHandle)
                 .orElseThrow(() -> new TableNotFoundException(tableName));
 
-        Optional<HiveBucketHandle> hiveBucketHandle = getHiveBucketHandle(session, table);
+        Optional<HiveBucketHandle> hiveBucketHandle = getHiveBucketHandle(table);
         if (!hiveBucketHandle.isPresent()) {
             return Optional.empty();
         }
@@ -3040,7 +3048,7 @@ public class HiveMetadata
         Table table = metastore.getTable(metastoreContext, tableName.getSchemaName(), tableName.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(tableName));
 
-        Optional<HiveBucketHandle> hiveBucketHandle = getHiveBucketHandle(session, table);
+        Optional<HiveBucketHandle> hiveBucketHandle = getHiveBucketHandle(table);
         if (hiveBucketHandle.isPresent()) {
             // For bucketed table, table partitioning (i.e. the bucketing scheme) should be respected,
             // and there is no additional preferred shuffle partitioning
@@ -3769,7 +3777,7 @@ public class HiveMetadata
                             .orElse("")
                             .equals(columnName.get()))
                     .collect(toImmutableList());
-            if (notNullConstraints.isEmpty() || !notNullConstraints.get(0).getName().isPresent()) {
+            if (notNullConstraints.size() == 0 || !notNullConstraints.get(0).getName().isPresent()) {
                 throw new PrestoException(NOT_FOUND, format("Not Null constraint not found on column %s", columnName.get()));
             }
             constraintToDrop = notNullConstraints.get(0).getName().get();

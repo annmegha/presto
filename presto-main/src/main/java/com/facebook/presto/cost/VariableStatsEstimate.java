@@ -13,13 +13,10 @@
  */
 package com.facebook.presto.cost;
 
-import com.facebook.presto.spi.statistics.ConnectorHistogram;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
@@ -30,7 +27,6 @@ import static java.lang.Double.POSITIVE_INFINITY;
 import static java.lang.Double.isInfinite;
 import static java.lang.Double.isNaN;
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 
 public class VariableStatsEstimate
 {
@@ -43,7 +39,6 @@ public class VariableStatsEstimate
     private final double nullsFraction;
     private final double averageRowSize;
     private final double distinctValuesCount;
-    private final Optional<ConnectorHistogram> histogram;
 
     public static VariableStatsEstimate unknown()
     {
@@ -55,13 +50,13 @@ public class VariableStatsEstimate
         return ZERO;
     }
 
+    @JsonCreator
     public VariableStatsEstimate(
-            double lowValue,
-            double highValue,
-            double nullsFraction,
-            double averageRowSize,
-            double distinctValuesCount,
-            Optional<ConnectorHistogram> histogram)
+            @JsonProperty("lowValue") double lowValue,
+            @JsonProperty("highValue") double highValue,
+            @JsonProperty("nullsFraction") double nullsFraction,
+            @JsonProperty("averageRowSize") double averageRowSize,
+            @JsonProperty("distinctValuesCount") double distinctValuesCount)
     {
         checkArgument(
                 lowValue <= highValue || (isNaN(lowValue) && isNaN(highValue)),
@@ -84,18 +79,6 @@ public class VariableStatsEstimate
         checkArgument(distinctValuesCount >= 0 || isNaN(distinctValuesCount), "Distinct values count should be non-negative, got: %s", distinctValuesCount);
         // TODO normalize distinctValuesCount for an empty range (or validate it is already normalized)
         this.distinctValuesCount = distinctValuesCount;
-        this.histogram = requireNonNull(histogram, "histogram is null");
-    }
-
-    @JsonCreator
-    public VariableStatsEstimate(
-            @JsonProperty("lowValue") double lowValue,
-            @JsonProperty("highValue") double highValue,
-            @JsonProperty("nullsFraction") double nullsFraction,
-            @JsonProperty("averageRowSize") double averageRowSize,
-            @JsonProperty("distinctValuesCount") double distinctValuesCount)
-    {
-        this(lowValue, highValue, nullsFraction, averageRowSize, distinctValuesCount, Optional.empty());
     }
 
     @JsonProperty
@@ -114,15 +97,6 @@ public class VariableStatsEstimate
     public double getNullsFraction()
     {
         return nullsFraction;
-    }
-
-    // We ignore the histogram during serialization because histograms can be
-    // quite large. Histograms are not used outside the coordinator, so there
-    // isn't a need to serialize them
-    @JsonIgnore
-    public Optional<ConnectorHistogram> getHistogram()
-    {
-        return histogram;
     }
 
     public StatisticRange statisticRange()
@@ -179,8 +153,6 @@ public class VariableStatsEstimate
             return false;
         }
         VariableStatsEstimate that = (VariableStatsEstimate) o;
-        // histograms are explicitly left out because equals calculations would
-        // be expensive.
         return Double.compare(nullsFraction, that.nullsFraction) == 0 &&
                 Double.compare(averageRowSize, that.averageRowSize) == 0 &&
                 Double.compare(distinctValuesCount, that.distinctValuesCount) == 0 &&
@@ -202,7 +174,6 @@ public class VariableStatsEstimate
                 .add("nulls", nullsFraction)
                 .add("ndv", distinctValuesCount)
                 .add("rowSize", averageRowSize)
-                .add("histogram", histogram)
                 .toString();
     }
 
@@ -218,8 +189,7 @@ public class VariableStatsEstimate
                 .setHighValue(other.getHighValue())
                 .setNullsFraction(other.getNullsFraction())
                 .setAverageRowSize(other.getAverageRowSize())
-                .setDistinctValuesCount(other.getDistinctValuesCount())
-                .setHistogram(other.getHistogram());
+                .setDistinctValuesCount(other.getDistinctValuesCount());
     }
 
     public static final class Builder
@@ -229,7 +199,6 @@ public class VariableStatsEstimate
         private double nullsFraction = NaN;
         private double averageRowSize = NaN;
         private double distinctValuesCount = NaN;
-        private Optional<ConnectorHistogram> histogram = Optional.empty();
 
         public Builder setStatisticsRange(StatisticRange range)
         {
@@ -268,16 +237,9 @@ public class VariableStatsEstimate
             return this;
         }
 
-        public Builder setHistogram(Optional<ConnectorHistogram> histogram)
-        {
-            this.histogram = histogram;
-            return this;
-        }
-
         public VariableStatsEstimate build()
         {
-            return new VariableStatsEstimate(lowValue, highValue, nullsFraction, averageRowSize, distinctValuesCount,
-                    histogram);
+            return new VariableStatsEstimate(lowValue, highValue, nullsFraction, averageRowSize, distinctValuesCount);
         }
     }
 }

@@ -13,7 +13,6 @@
  */
 package com.facebook.presto.spi.connector;
 
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorPageSource;
 import com.facebook.presto.spi.ConnectorSession;
@@ -41,7 +40,6 @@ public interface ConnectorPageSourceProvider
 
     /**
      * @param columns columns that should show up in the output page, in this order
-     * @param runtimeStats
      */
     default ConnectorPageSource createPageSource(
             ConnectorTransactionHandle transactionHandle,
@@ -49,8 +47,7 @@ public interface ConnectorPageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle layout,
             List<ColumnHandle> columns,
-            SplitContext splitContext,
-            RuntimeStats runtimeStats)
+            SplitContext splitContext)
     {
         return createPageSource(transactionHandle, session, split, columns, splitContext);
     }

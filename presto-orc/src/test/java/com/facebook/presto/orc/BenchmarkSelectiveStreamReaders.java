@@ -340,11 +340,11 @@ public class BenchmarkSelectiveStreamReaders
                 return Optional.of(BigintRange.of((long) (Byte.MIN_VALUE * selectionRateForNonNull), (long) (Byte.MAX_VALUE * selectionRateForNonNull), filterAllowNull));
             }
 
-            if (type.equals(REAL)) {
+            if (type == REAL) {
                 return Optional.of(FloatRange.of(0, false, false, selectionRateForNonNull, false, true, filterAllowNull));
             }
 
-            if (type.equals(DOUBLE)) {
+            if (type == DOUBLE) {
                 return Optional.of(DoubleRange.of(0, false, false, selectionRateForNonNull, false, true, filterAllowNull));
             }
 
@@ -423,11 +423,11 @@ public class BenchmarkSelectiveStreamReaders
                 return new SqlTimestamp(value, TimeZoneKey.UTC_KEY, MILLISECONDS);
             }
 
-            if (type.equals(REAL)) {
+            if (type == REAL) {
                 return random.nextFloat();
             }
 
-            if (type.equals(DOUBLE)) {
+            if (type == DOUBLE) {
                 return random.nextDouble();
             }
 

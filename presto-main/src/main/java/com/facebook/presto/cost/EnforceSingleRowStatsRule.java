@@ -21,7 +21,6 @@ import com.facebook.presto.sql.planner.plan.EnforceSingleRowNode;
 
 import java.util.Optional;
 
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.FACT;
 import static com.facebook.presto.sql.planner.plan.Patterns.enforceSingleRow;
 
 public class EnforceSingleRowStatsRule
@@ -45,7 +44,6 @@ public class EnforceSingleRowStatsRule
     {
         return Optional.of(PlanNodeStatsEstimate.buildFrom(sourceStats.getStats(node.getSource()))
                 .setOutputRowCount(1)
-                .setConfidence(FACT)
                 .build());
     }
 }

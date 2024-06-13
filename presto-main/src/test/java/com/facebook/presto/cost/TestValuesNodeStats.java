@@ -25,7 +25,6 @@ import static com.facebook.presto.common.type.DoubleType.DOUBLE;
 import static com.facebook.presto.common.type.UnknownType.UNKNOWN;
 import static com.facebook.presto.common.type.VarcharType.VARCHAR;
 import static com.facebook.presto.common.type.VarcharType.createVarcharType;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.FACT;
 import static com.facebook.presto.sql.planner.iterative.rule.test.PlanBuilder.constantExpressions;
 import static com.facebook.presto.sql.relational.Expressions.call;
 import static com.facebook.presto.sql.relational.Expressions.constant;
@@ -50,7 +49,7 @@ public class TestValuesNodeStats
                 .check(outputStats -> outputStats.equalTo(
                         PlanNodeStatsEstimate.builder()
                                 .setOutputRowCount(3)
-                                .setConfidence(FACT)
+                                .setConfident(true)
                                 .addVariableStatistics(
                                         new VariableReferenceExpression(Optional.empty(), "a", BIGINT),
                                         VariableStatsEstimate.builder()
@@ -80,7 +79,7 @@ public class TestValuesNodeStats
                 .check(outputStats -> outputStats.equalTo(
                         PlanNodeStatsEstimate.builder()
                                 .setOutputRowCount(4)
-                                .setConfidence(FACT)
+                                .setConfident(true)
                                 .addVariableStatistics(
                                         new VariableReferenceExpression(Optional.empty(), "v", createVarcharType(30)),
                                         VariableStatsEstimate.builder()
@@ -97,7 +96,7 @@ public class TestValuesNodeStats
         FunctionResolution resolution = new FunctionResolution(tester().getMetadata().getFunctionAndTypeManager().getFunctionAndTypeResolver());
         PlanNodeStatsEstimate bigintNullAStats = PlanNodeStatsEstimate.builder()
                 .setOutputRowCount(1)
-                .setConfidence(FACT)
+                .setConfident(true)
                 .addVariableStatistics(new VariableReferenceExpression(Optional.empty(), "a", BIGINT), VariableStatsEstimate.zero())
                 .build();
 
@@ -116,7 +115,7 @@ public class TestValuesNodeStats
 
         PlanNodeStatsEstimate unknownNullAStats = PlanNodeStatsEstimate.builder()
                 .setOutputRowCount(1)
-                .setConfidence(FACT)
+                .setConfident(true)
                 .addVariableStatistics(new VariableReferenceExpression(Optional.empty(), "a", UNKNOWN), VariableStatsEstimate.zero())
                 .build();
 
@@ -137,7 +136,7 @@ public class TestValuesNodeStats
                 .check(outputStats -> outputStats.equalTo(
                         PlanNodeStatsEstimate.builder()
                                 .setOutputRowCount(0)
-                                .setConfidence(FACT)
+                                .setConfident(true)
                                 .addVariableStatistics(new VariableReferenceExpression(Optional.empty(), "a", BIGINT), VariableStatsEstimate.zero())
                                 .build()));
     }

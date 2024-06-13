@@ -166,7 +166,7 @@ public class TestSqlTask
         // Task results clear out all buffered data once ack is sent
         long pagesRetanedSizeInBytes = results.getSerializedPages().stream().mapToLong(SerializedPage::getRetainedSizeInBytes).sum();
         assertEquals(results.getBufferedBytes(), 0);
-        Optional<BufferInfo> taskBufferInfo = sqlTask.getOutputBufferInfo().getBuffers().stream().filter(buffer -> buffer.getBufferId().equals(OUT)).findFirst();
+        Optional<BufferInfo> taskBufferInfo = sqlTask.getTaskBufferInfo(OUT);
         assertTrue(taskBufferInfo.isPresent());
         // Buffer still remains as acknowledgement has not been received
         assertEquals(taskBufferInfo.get().getPageBufferInfo().getBufferedBytes(), pagesRetanedSizeInBytes);
@@ -175,7 +175,7 @@ public class TestSqlTask
             results = sqlTask.getTaskResults(OUT, results.getToken() + results.getSerializedPages().size(), new DataSize(1, MEGABYTE)).get();
             pagesRetanedSizeInBytes = results.getSerializedPages().stream().mapToLong(SerializedPage::getRetainedSizeInBytes).sum();
             assertEquals(results.getBufferedBytes(), pagesRetanedSizeInBytes);
-            taskBufferInfo = sqlTask.getOutputBufferInfo().getBuffers().stream().filter(buffer -> buffer.getBufferId().equals(OUT)).findFirst();
+            taskBufferInfo = sqlTask.getTaskBufferInfo(OUT);
             assertTrue(taskBufferInfo.isPresent());
             assertEquals(taskBufferInfo.get().getPageBufferInfo().getBufferedBytes(), pagesRetanedSizeInBytes);
         }

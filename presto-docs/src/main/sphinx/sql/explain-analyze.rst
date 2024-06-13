@@ -7,7 +7,7 @@ Synopsis
 
 .. code-block:: none
 
-    EXPLAIN ANALYZE [VERBOSE] [(format <TEXT|JSON>)] statement
+    EXPLAIN ANALYZE [VERBOSE] statement
 
 Description
 -----------
@@ -17,8 +17,6 @@ along with the cost of each operation.
 
 The ``VERBOSE`` option will give more detailed information and low-level statistics;
 understanding these may require knowledge of Presto internals and implementation details.
-The format of the output can be set by the user with the ``format`` option. The default
-output format is ``TEXT``.
 
 .. note::
 

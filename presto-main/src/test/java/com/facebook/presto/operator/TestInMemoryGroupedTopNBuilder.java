@@ -18,6 +18,7 @@ import com.facebook.presto.common.Page;
 import com.facebook.presto.common.array.ObjectBigArray;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.memory.TestingMemoryContext;
+import com.facebook.presto.sql.analyzer.FeaturesConfig;
 import com.facebook.presto.sql.gen.JoinCompiler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
@@ -435,7 +436,7 @@ public class TestInMemoryGroupedTopNBuilder
                 Optional.empty(),
                 1,
                 false,
-                new JoinCompiler(createTestMetadataManager()),
+                new JoinCompiler(createTestMetadataManager(), new FeaturesConfig()),
                 updateMemory);
     }
 

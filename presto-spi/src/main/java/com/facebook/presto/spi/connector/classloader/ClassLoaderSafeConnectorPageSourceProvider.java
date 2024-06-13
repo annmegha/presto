@@ -13,7 +13,6 @@
  */
 package com.facebook.presto.spi.connector.classloader;
 
-import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorPageSource;
 import com.facebook.presto.spi.ConnectorSession;
@@ -58,11 +57,10 @@ public class ClassLoaderSafeConnectorPageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle layout,
             List<ColumnHandle> columns,
-            SplitContext splitContext,
-            RuntimeStats runtimeStats)
+            SplitContext splitContext)
     {
         try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(classLoader)) {
-            return delegate.createPageSource(transactionHandle, session, split, layout, columns, splitContext, runtimeStats);
+            return delegate.createPageSource(transactionHandle, session, split, layout, columns, splitContext);
         }
     }
 }

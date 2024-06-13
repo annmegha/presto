@@ -22,9 +22,6 @@ import com.facebook.presto.common.block.UncheckedBlock;
 import com.facebook.presto.common.function.SqlFunctionProperties;
 
 import static com.facebook.presto.common.type.TypeSignature.parseTypeSignature;
-import static com.facebook.presto.common.type.TypeUtils.doubleCompare;
-import static com.facebook.presto.common.type.TypeUtils.doubleEquals;
-import static com.facebook.presto.common.type.TypeUtils.doubleHashCode;
 import static java.lang.Double.doubleToLongBits;
 import static java.lang.Double.longBitsToDouble;
 
@@ -32,15 +29,11 @@ public final class DoubleType
         extends AbstractPrimitiveType
         implements FixedWidthType
 {
-    public static final DoubleType DOUBLE = new DoubleType(true);
-    public static final DoubleType OLD_NAN_DOUBLE = new DoubleType(false);
+    public static final DoubleType DOUBLE = new DoubleType();
 
-    private final boolean useNewNanDefintion;
-
-    private DoubleType(boolean useNewNanDefintion)
+    private DoubleType()
     {
         super(parseTypeSignature(StandardTypes.DOUBLE), double.class);
-        this.useNewNanDefintion = useNewNanDefintion;
     }
 
     @Override
@@ -75,19 +68,17 @@ public final class DoubleType
     {
         double leftValue = longBitsToDouble(leftBlock.getLong(leftPosition));
         double rightValue = longBitsToDouble(rightBlock.getLong(rightPosition));
-        if (!useNewNanDefintion) {
-            // direct equality is correct here
-            // noinspection FloatingPointEquality
-            return leftValue == rightValue;
-        }
-        return doubleEquals(leftValue, rightValue);
+
+        // direct equality is correct here
+        // noinspection FloatingPointEquality
+        return leftValue == rightValue;
     }
 
     @Override
     public long hash(Block block, int position)
     {
         // convert to canonical NaN if necessary
-        return doubleHashCode(longBitsToDouble(block.getLong(position)));
+        return AbstractLongType.hash(doubleToLongBits(longBitsToDouble(block.getLong(position))));
     }
 
     @Override
@@ -95,7 +86,7 @@ public final class DoubleType
     {
         double leftValue = longBitsToDouble(leftBlock.getLong(leftPosition));
         double rightValue = longBitsToDouble(rightBlock.getLong(rightPosition));
-        return doubleCompare(leftValue, rightValue);
+        return Double.compare(leftValue, rightValue);
     }
 
     @Override
@@ -158,7 +149,7 @@ public final class DoubleType
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object other)
     {
-        return other instanceof DoubleType;
+        return other == DOUBLE;
     }
 
     @Override

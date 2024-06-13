@@ -13,9 +13,12 @@
  */
 #include <gtest/gtest.h>
 
+#include <fstream>
 #include <ios>
+#include <iosfwd>
 
 #include "presto_cpp/main/common/tests/test_json.h"
+#include "presto_cpp/presto_protocol/presto_protocol.h"
 #include "velox/common/encode/Base64.h"
 
 using namespace facebook;

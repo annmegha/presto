@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 
 import static com.facebook.presto.common.type.BigintType.BIGINT;
 import static com.facebook.presto.cost.EstimateAssertion.assertEstimateEquals;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel;
 import static com.google.common.collect.Sets.union;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -52,9 +51,9 @@ public class PlanNodeStatsAssertion
         return this;
     }
 
-    public PlanNodeStatsAssertion confident(ConfidenceLevel expected)
+    public PlanNodeStatsAssertion confident(boolean expected)
     {
-        assertEquals(actual.confidenceLevel(), expected);
+        assertEquals(actual.isConfident(), expected);
         return this;
     }
 
@@ -101,7 +100,7 @@ public class PlanNodeStatsAssertion
     public PlanNodeStatsAssertion equalTo(PlanNodeStatsEstimate expected)
     {
         assertEstimateEquals(actual.getOutputRowCount(), expected.getOutputRowCount(), "outputRowCount mismatch");
-        assertEquals(actual.confidenceLevel(), expected.confidenceLevel());
+        assertEquals(actual.isConfident(), expected.isConfident());
 
         for (VariableReferenceExpression variable : union(expected.getVariablesWithKnownStatistics(), actual.getVariablesWithKnownStatistics())) {
             assertVariableStatsEqual(variable, actual.getVariableStatistics(variable), expected.getVariableStatistics(variable));

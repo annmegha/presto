@@ -9,7 +9,6 @@ Note: Presto C++ is in active development. See :doc:`Limitations </presto_cpp/li
 
     presto_cpp/features
     presto_cpp/limitations
-    presto_cpp/properties
 
 Overview
 ========

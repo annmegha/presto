@@ -31,7 +31,6 @@ class Announcer : public PeriodicServiceInventoryManager {
       const std::string& environment,
       const std::string& nodeId,
       const std::string& nodeLocation,
-      const bool sidecar,
       const std::vector<std::string>& connectorIds,
       const uint64_t maxFrequencyMs_,
       folly::SSLContextPtr sslContext);

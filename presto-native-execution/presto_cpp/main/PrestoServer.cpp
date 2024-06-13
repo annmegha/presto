@@ -280,7 +280,6 @@ void PrestoServer::run() {
         environment_,
         nodeId_,
         nodeLocation_,
-        systemConfig->prestoNativeSidecar(),
         catalogNames,
         systemConfig->announcementMaxFrequencyMs(),
         sslContext_);
@@ -386,8 +385,7 @@ void PrestoServer::run() {
 
   if (systemConfig->exchangeEnableConnectionPool()) {
     PRESTO_STARTUP_LOG(INFO) << "Enable exchange Http Client connection pool.";
-    exchangeSourceConnectionPool_ =
-        std::make_unique<http::HttpClientConnectionPool>();
+    exchangeSourceConnectionPools_ = std::make_unique<ConnectionPools>();
   }
 
   facebook::velox::exec::ExchangeSource::registerFactory(
@@ -403,7 +401,7 @@ void PrestoServer::run() {
             pool,
             driverExecutor_.get(),
             exchangeHttpExecutor_.get(),
-            exchangeSourceConnectionPool_.get(),
+            exchangeSourceConnectionPools_.get(),
             sslContext_);
       });
 
@@ -542,9 +540,7 @@ void PrestoServer::run() {
       << "': threads: " << driverExecutor_->numActiveThreads() << "/"
       << driverExecutor_->numThreads()
       << ", task queue: " << driverExecutor_->getTaskQueueSize();
-  // Schedule release of SessionPools held by HttpClients before the exchange
-  // HTTP executor threads are joined.
-  driverExecutor_.reset();
+  driverExecutor_->join();
 
   if (connectorIoExecutor_) {
     PRESTO_SHUTDOWN_LOG(INFO)
@@ -554,9 +550,9 @@ void PrestoServer::run() {
     connectorIoExecutor_->join();
   }
 
-  if (exchangeSourceConnectionPool_) {
+  if (exchangeSourceConnectionPools_) {
     PRESTO_SHUTDOWN_LOG(INFO) << "Releasing exchange HTTP connection pools";
-    exchangeSourceConnectionPool_->destroy();
+    exchangeSourceConnectionPools_->destroy();
   }
 
   if (httpSrvCpuExecutor_ != nullptr) {
@@ -655,29 +651,6 @@ void PrestoServer::initializeThreadPools() {
   }
 }
 
-std::unique_ptr<cache::SsdCache> PrestoServer::setupSsdCache() {
-  VELOX_CHECK_NULL(cacheExecutor_);
-  auto* systemConfig = SystemConfig::instance();
-  if (systemConfig->asyncCacheSsdGb() == 0) {
-    return nullptr;
-  }
-
-  constexpr int32_t kNumSsdShards = 16;
-  cacheExecutor_ = std::make_unique<folly::IOThreadPoolExecutor>(kNumSsdShards);
-  cache::SsdCache::Config cacheConfig(
-      systemConfig->asyncCacheSsdPath(),
-      systemConfig->asyncCacheSsdGb() << 30,
-      kNumSsdShards,
-      cacheExecutor_.get(),
-      systemConfig->asyncCacheSsdCheckpointGb() << 30,
-      systemConfig->asyncCacheSsdDisableFileCow(),
-      systemConfig->ssdCacheChecksumEnabled(),
-      systemConfig->ssdCacheReadVerificationEnabled());
-  PRESTO_STARTUP_LOG(INFO) << "Initializing SSD cache with "
-                           << cacheConfig.toString();
-  return std::make_unique<cache::SsdCache>(cacheConfig);
-}
-
 void PrestoServer::initializeVeloxMemory() {
   auto* systemConfig = SystemConfig::instance();
   const uint64_t memoryGb = systemConfig->systemMemoryGb();
@@ -722,7 +695,29 @@ void PrestoServer::initializeVeloxMemory() {
                            << memory::memoryManager()->toString();
 
   if (systemConfig->asyncDataCacheEnabled()) {
-    std::unique_ptr<cache::SsdCache> ssd = setupSsdCache();
+    std::unique_ptr<cache::SsdCache> ssd;
+    const auto asyncCacheSsdGb = systemConfig->asyncCacheSsdGb();
+    if (asyncCacheSsdGb > 0) {
+      constexpr int32_t kNumSsdShards = 16;
+      cacheExecutor_ =
+          std::make_unique<folly::IOThreadPoolExecutor>(kNumSsdShards);
+      auto asyncCacheSsdCheckpointGb =
+          systemConfig->asyncCacheSsdCheckpointGb();
+      auto asyncCacheSsdDisableFileCow =
+          systemConfig->asyncCacheSsdDisableFileCow();
+      PRESTO_STARTUP_LOG(INFO)
+          << "Initializing SSD cache with capacity " << asyncCacheSsdGb
+          << "GB, checkpoint size " << asyncCacheSsdCheckpointGb
+          << "GB, file cow "
+          << (asyncCacheSsdDisableFileCow ? "DISABLED" : "ENABLED");
+      ssd = std::make_unique<cache::SsdCache>(
+          systemConfig->asyncCacheSsdPath(),
+          asyncCacheSsdGb << 30,
+          kNumSsdShards,
+          cacheExecutor_.get(),
+          asyncCacheSsdCheckpointGb << 30,
+          asyncCacheSsdDisableFileCow);
+    }
     std::string cacheStr =
         ssd == nullptr ? "AsyncDataCache" : "AsyncDataCache with SSD";
     cache_ = cache::AsyncDataCache::create(

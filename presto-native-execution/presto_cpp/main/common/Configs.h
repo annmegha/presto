@@ -248,8 +248,6 @@ class SystemConfig : public ConfigBase {
   /// Memory allocation limit enforced via internal memory allocator.
   static constexpr std::string_view kSystemMemoryGb{"system-memory-gb"};
 
-  /// Indicates if the process is configured as a sidecar.
-  static constexpr std::string_view kNativeSidecar{"native-sidecar"};
   /// Specifies the total memory capacity that can be used by query execution in
   /// GB. The query memory capacity should be configured less than the system
   /// memory capacity ('system-memory-gb') to reserve memory for system usage
@@ -322,14 +320,6 @@ class SystemConfig : public ConfigBase {
   /// option to disable cow for cache files.
   static constexpr std::string_view kAsyncCacheSsdDisableFileCow{
       "async-cache-ssd-disable-file-cow"};
-  /// When enabled, a CRC-based checksum is calculated for each cache entry
-  /// written to SSD. The checksum is stored in the next checkpoint file.
-  static constexpr std::string_view kSsdCacheChecksumEnabled{
-      "ssd-cache-checksum-enabled"};
-  /// When enabled, the checksum is recalculated and verified against the stored
-  /// value when cache data is loaded from the SSD.
-  static constexpr std::string_view kSsdCacheReadVerificationEnabled{
-      "ssd-cache-read-verification-enabled"};
   static constexpr std::string_view kEnableSerializedPageChecksum{
       "enable-serialized-page-checksum"};
 
@@ -635,10 +625,6 @@ class SystemConfig : public ConfigBase {
 
   bool asyncCacheSsdDisableFileCow() const;
 
-  bool ssdCacheChecksumEnabled() const;
-
-  bool ssdCacheReadVerificationEnabled() const;
-
   std::string shuffleName() const;
 
   bool enableSerializedPageChecksum() const;
@@ -724,8 +710,6 @@ class SystemConfig : public ConfigBase {
   std::chrono::duration<double> cacheVeloxTtlCheckInterval() const;
 
   bool enableRuntimeMetricsCollection() const;
-
-  bool prestoNativeSidecar() const;
 };
 
 /// Provides access to node properties defined in node.properties file.

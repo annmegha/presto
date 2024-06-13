@@ -474,6 +474,7 @@ public class TestClientBuffer
         return createBufferResult(TASK_INSTANCE_ID, token, pages);
     }
 
+    @SuppressWarnings("ConstantConditions")
     private static void assertBufferDestroyed(ClientBuffer buffer, int pagesSent)
     {
         BufferInfo bufferInfo = buffer.getInfo();

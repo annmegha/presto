@@ -472,8 +472,7 @@ public class QueryMonitor
             if (queryInfo.getOutputStage().isPresent()) {
                 return Optional.of(jsonDistributedPlan(
                         queryInfo.getOutputStage().get(),
-                        functionAndTypeManager,
-                        queryInfo.getSession().toSession(sessionPropertyManager)));
+                        functionAndTypeManager));
             }
         }
         catch (Exception e) {

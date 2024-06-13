@@ -13,39 +13,29 @@
  */
 package com.facebook.presto.sql.planner.planPrinter;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public class OperatorInputStats
+class OperatorInputStats
 {
     private final long totalDrivers;
     private final long inputPositions;
     private final double sumSquaredInputPositions;
 
-    @JsonCreator
-    public OperatorInputStats(
-            @JsonProperty("totalDrivers") long totalDrivers,
-            @JsonProperty("inputPositions") long inputPositions,
-            @JsonProperty("sumSquaredInputPositions") double sumSquaredInputPositions)
+    public OperatorInputStats(long totalDrivers, long inputPositions, double sumSquaredInputPositions)
     {
         this.totalDrivers = totalDrivers;
         this.inputPositions = inputPositions;
         this.sumSquaredInputPositions = sumSquaredInputPositions;
     }
 
-    @JsonProperty
     public long getTotalDrivers()
     {
         return totalDrivers;
     }
 
-    @JsonProperty
     public long getInputPositions()
     {
         return inputPositions;
     }
 
-    @JsonProperty
     public double getSumSquaredInputPositions()
     {
         return sumSquaredInputPositions;

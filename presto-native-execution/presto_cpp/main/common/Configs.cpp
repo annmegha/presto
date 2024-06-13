@@ -179,14 +179,11 @@ SystemConfig::SystemConfig() {
           NUM_PROP(kMallocHeapDumpThresholdGb, 20),
           NUM_PROP(kMallocMemMinHeapDumpInterval, 10),
           NUM_PROP(kMallocMemMaxHeapDumpFiles, 5),
-          BOOL_PROP(kNativeSidecar, false),
           BOOL_PROP(kAsyncDataCacheEnabled, true),
           NUM_PROP(kAsyncCacheSsdGb, 0),
           NUM_PROP(kAsyncCacheSsdCheckpointGb, 0),
           STR_PROP(kAsyncCacheSsdPath, "/mnt/flash/async_cache."),
           BOOL_PROP(kAsyncCacheSsdDisableFileCow, false),
-          BOOL_PROP(kSsdCacheChecksumEnabled, false),
-          BOOL_PROP(kSsdCacheReadVerificationEnabled, false),
           BOOL_PROP(kEnableSerializedPageChecksum, true),
           BOOL_PROP(kUseMmapAllocator, true),
           STR_PROP(kMemoryArbitratorKind, ""),
@@ -214,7 +211,7 @@ SystemConfig::SystemConfig() {
           STR_PROP(kExchangeMaxErrorDuration, "3m"),
           STR_PROP(kExchangeRequestTimeout, "10s"),
           STR_PROP(kExchangeConnectTimeout, "20s"),
-          BOOL_PROP(kExchangeEnableConnectionPool, true),
+          BOOL_PROP(kExchangeEnableConnectionPool, false),
           BOOL_PROP(kExchangeImmediateBufferTransfer, true),
           NUM_PROP(kTaskRunTimeSliceMicros, 50'000),
           BOOL_PROP(kIncludeNodeInSpillPath, false),
@@ -385,10 +382,6 @@ uint32_t SystemConfig::systemMemoryGb() const {
   return optionalProperty<uint32_t>(kSystemMemoryGb).value();
 }
 
-bool SystemConfig::prestoNativeSidecar() const {
-  return optionalProperty<bool>(kNativeSidecar).value();
-}
-
 uint32_t SystemConfig::systemMemLimitGb() const {
   return optionalProperty<uint32_t>(kSystemMemLimitGb).value();
 }
@@ -443,14 +436,6 @@ std::string SystemConfig::asyncCacheSsdPath() const {
 
 bool SystemConfig::asyncCacheSsdDisableFileCow() const {
   return optionalProperty<bool>(kAsyncCacheSsdDisableFileCow).value();
-}
-
-bool SystemConfig::ssdCacheChecksumEnabled() const {
-  return optionalProperty<bool>(kSsdCacheChecksumEnabled).value();
-}
-
-bool SystemConfig::ssdCacheReadVerificationEnabled() const {
-  return optionalProperty<bool>(kSsdCacheReadVerificationEnabled).value();
 }
 
 std::string SystemConfig::shuffleName() const {
@@ -757,7 +742,7 @@ BaseVeloxQueryConfig::BaseVeloxQueryConfig() {
           NUM_PROP(
               QueryConfig::kSpillStartPartitionBit, c.spillStartPartitionBit()),
           NUM_PROP(
-              QueryConfig::kSpillNumPartitionBits, c.spillNumPartitionBits()),
+              QueryConfig::kJoinSpillPartitionBits, c.joinSpillPartitionBits()),
           NUM_PROP(
               QueryConfig::kSpillableReservationGrowthPct,
               c.spillableReservationGrowthPct()),

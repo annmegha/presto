@@ -23,7 +23,6 @@ import com.facebook.presto.sql.planner.plan.RemoteSourceNode;
 
 import java.util.Optional;
 
-import static com.facebook.presto.SystemSessionProperties.shouldOptimizerUseHistograms;
 import static com.facebook.presto.sql.planner.plan.Patterns.remoteSource;
 import static java.util.Objects.requireNonNull;
 
@@ -50,9 +49,8 @@ public class RemoteSourceStatsRule
     protected Optional<PlanNodeStatsEstimate> doCalculate(RemoteSourceNode node, StatsProvider sourceStats, Lookup lookup, Session session, TypeProvider types)
     {
         QueryId queryId = session.getQueryId();
-        PlanNodeStatsEstimateMath calculator = new PlanNodeStatsEstimateMath(shouldOptimizerUseHistograms(session));
         return node.getSourceFragmentIds().stream()
                 .map(fragmentId -> fragmentStatsProvider.getStats(queryId, fragmentId))
-                .reduce(calculator::addStatsAndCollapseDistinctValues);
+                .reduce(PlanNodeStatsEstimateMath::addStatsAndCollapseDistinctValues);
     }
 }

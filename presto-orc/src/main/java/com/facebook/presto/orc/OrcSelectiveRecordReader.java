@@ -519,7 +519,7 @@ public class OrcSelectiveRecordReader
             return 20;
         }
 
-        if (type.equals(REAL) || type.equals(DOUBLE)) {
+        if (type == REAL || type == DOUBLE) {
             return 30;
         }
 

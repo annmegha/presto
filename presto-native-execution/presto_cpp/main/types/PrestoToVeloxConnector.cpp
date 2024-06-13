@@ -235,9 +235,6 @@ std::string toString(
     const VeloxExprConverter& exprConverter,
     const TypePtr& type) {
   auto value = exprConverter.getConstantValue(type, *block);
-  if (type->isVarbinary()) {
-    return value.value<TypeKind::VARBINARY>();
-  }
   return value.value<std::string>();
 }
 
@@ -655,7 +652,6 @@ std::unique_ptr<common::Filter> toFilter(
     case TypeKind::DOUBLE:
       return doubleRangeToFilter(range, nullAllowed, exprConverter, type);
     case TypeKind::VARCHAR:
-    case TypeKind::VARBINARY:
       return varcharRangeToFilter(range, nullAllowed, exprConverter, type);
     case TypeKind::BOOLEAN:
       return boolRangeToFilter(range, nullAllowed, exprConverter, type);
@@ -1184,6 +1180,10 @@ HivePrestoToVeloxConnector::toVeloxInsertTableHandle(
   bool isPartitioned{false};
   const auto inputColumns = toHiveColumns(
       hiveOutputTableHandle->inputColumns, typeParser, isPartitioned);
+  VELOX_USER_CHECK(
+      hiveOutputTableHandle->bucketProperty == nullptr || isPartitioned,
+      "Bucketed table must be partitioned: {}",
+      toJsonString(*hiveOutputTableHandle));
   return std::make_unique<velox::connector::hive::HiveInsertTableHandle>(
       inputColumns,
       toLocationHandle(hiveOutputTableHandle->locationHandle),
@@ -1208,6 +1208,10 @@ HivePrestoToVeloxConnector::toVeloxInsertTableHandle(
   bool isPartitioned{false};
   const auto inputColumns = toHiveColumns(
       hiveInsertTableHandle->inputColumns, typeParser, isPartitioned);
+  VELOX_USER_CHECK(
+      hiveInsertTableHandle->bucketProperty == nullptr || isPartitioned,
+      "Bucketed table must be partitioned: {}",
+      toJsonString(*hiveInsertTableHandle));
 
   const auto table = hiveInsertTableHandle->pageSinkMetadata.table;
   VELOX_USER_CHECK_NOT_NULL(table, "Table must not be null for insert query");

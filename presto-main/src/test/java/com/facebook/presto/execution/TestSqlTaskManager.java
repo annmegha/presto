@@ -170,17 +170,13 @@ public class TestSqlTaskManager
             // Task results clear out all buffered data once ack is sent
             long retainedPageSize = results.getSerializedPages().get(0).getRetainedSizeInBytes();
             assertEquals(results.getBufferedBytes(), 0);
-            Optional<BufferInfo> taskBufferInfo = sqlTaskManager.getOutputBufferInfo(TASK_ID).getBuffers().stream()
-                    .filter(bufferInfo -> bufferInfo.getBufferId().equals(OUT))
-                    .findFirst();
+            Optional<BufferInfo> taskBufferInfo = sqlTaskManager.getTaskBufferInfo(TASK_ID, OUT);
             assertTrue(taskBufferInfo.isPresent());
             // Buffer still remains as acknowledgement has not been received
             assertEquals(taskBufferInfo.get().getPageBufferInfo().getBufferedBytes(), retainedPageSize);
             // Once acknowledged, the retained size of the data page is removed from the buffer
             sqlTaskManager.acknowledgeTaskResults(taskId, OUT, results.getNextToken());
-            taskBufferInfo = sqlTaskManager.getOutputBufferInfo(TASK_ID).getBuffers().stream()
-                    .filter(bufferInfo -> bufferInfo.getBufferId().equals(OUT))
-                    .findFirst();
+            taskBufferInfo = sqlTaskManager.getTaskBufferInfo(TASK_ID, OUT);
             assertTrue(taskBufferInfo.isPresent());
             assertEquals(taskBufferInfo.get().getPageBufferInfo().getBufferedBytes(), 0);
 

@@ -18,7 +18,6 @@
 #include "presto_cpp/main/PrestoExchangeSource.h"
 #include "presto_cpp/main/PrestoServer.h"
 #include "presto_cpp/main/common/Counters.h"
-#include "presto_cpp/main/http/HttpClient.h"
 #include "presto_cpp/main/http/filters/HttpEndpointLatencyFilter.h"
 #include "velox/common/base/PeriodicStatsReporter.h"
 #include "velox/common/base/StatsReporter.h"
@@ -85,9 +84,8 @@ static constexpr size_t kTaskPeriodCleanOldTasks{60'000'000}; // 60 seconds.
 static constexpr size_t kConnectorPeriodGlobalCounters{
     60'000'000}; // 60 seconds.
 static constexpr size_t kOsPeriodGlobalCounters{2'000'000}; // 2 seconds
-static constexpr size_t kHttpServerPeriodGlobalCounters{
-    60'000'000}; // 60 seconds.
-static constexpr size_t kHttpClientPeriodGlobalCounters{
+// Every 1 minute we print endpoint latency counters.
+static constexpr size_t kHttpEndpointLatencyPeriodGlobalCounters{
     60'000'000}; // 60 seconds.
 
 PeriodicTaskManager::PeriodicTaskManager(
@@ -139,10 +137,8 @@ void PeriodicTaskManager::start() {
   addOperatingSystemStatsUpdateTask();
 
   if (SystemConfig::instance()->enableHttpEndpointLatencyFilter()) {
-    addHttpServerStatsTask();
+    addHttpEndpointLatencyStatsTask();
   }
-
-  addHttpClientStatsTask();
 
   if (server_ && server_->hasCoordinatorDiscoverer()) {
     numDriverThreads_ = server_->numDriverThreads();
@@ -410,7 +406,7 @@ void PeriodicTaskManager::addOperatingSystemStatsUpdateTask() {
       "os_counters");
 }
 
-void PeriodicTaskManager::printHttpServerStats() {
+void PeriodicTaskManager::printHttpEndpointLatencyStats() {
   const auto latencyMetrics =
       http::filters::HttpEndpointLatencyFilter::retrieveLatencies();
   std::ostringstream oss;
@@ -422,26 +418,11 @@ void PeriodicTaskManager::printHttpServerStats() {
   LOG(INFO) << oss.str();
 }
 
-void PeriodicTaskManager::addHttpServerStatsTask() {
+void PeriodicTaskManager::addHttpEndpointLatencyStatsTask() {
   addTask(
-      [this]() { printHttpServerStats(); },
-      kHttpServerPeriodGlobalCounters,
-      "http_server_stats");
-}
-
-void PeriodicTaskManager::updateHttpClientStats() {
-  const auto numConnectionsCreated = http::HttpClient::numConnectionsCreated();
-  RECORD_METRIC_VALUE(
-      kCounterHttpClientNumConnectionsCreated,
-      numConnectionsCreated - lastHttpClientNumConnectionsCreated_);
-  lastHttpClientNumConnectionsCreated_ = numConnectionsCreated;
-}
-
-void PeriodicTaskManager::addHttpClientStatsTask() {
-  addTask(
-      [this] { updateHttpClientStats(); },
-      kHttpClientPeriodGlobalCounters,
-      "http_client_stats");
+      [this]() { printHttpEndpointLatencyStats(); },
+      kHttpEndpointLatencyPeriodGlobalCounters,
+      "http_endpoint_counters");
 }
 
 void PeriodicTaskManager::addWatchdogTask() {

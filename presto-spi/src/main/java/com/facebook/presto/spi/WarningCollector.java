@@ -27,7 +27,7 @@ public interface WarningCollector
                 @Override
                 public List<PrestoWarning> getWarnings()
                 {
-                    return Collections.emptyList();
+                    return Collections.unmodifiableList(Collections.emptyList());
                 }
 
                 @Override

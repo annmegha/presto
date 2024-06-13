@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import static com.facebook.presto.hive.HiveSessionProperties.DYNAMIC_SPLIT_SIZES_ENABLED;
 import static io.airlift.tpch.TpchTable.ORDERS;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test(singleThreaded = true)
@@ -57,12 +58,11 @@ public class TestHiveSplitScheduling
             executeExclusively(() -> {
                 eventListener.resetSplits();
                 getQueryRunner().execute("SELECT orderpriority FROM test_orders where ds = '2020-09-01' and substr(orderpriority, 1, 1) = '1'");
-                int numberOfSplitsWithoutDynamicSplitScheduling = eventListener.getTotalSplits();
+                assertEquals(eventListener.getTotalSplits(), 9);
                 eventListener.resetSplits();
                 getQueryRunner().execute(dynamicSplitsSession(), "SELECT orderpriority FROM test_orders where ds = '2020-09-01' and substr(orderpriority, 1, 1) = '1'");
                 // Less splits using dynamic number of splits.
-                int numberOfSplitsWithDynamicSplitScheduling = eventListener.getTotalSplits();
-                assertTrue(numberOfSplitsWithDynamicSplitScheduling < numberOfSplitsWithoutDynamicSplitScheduling, "Expected less splits with dynamic split scheduling");
+                assertEquals(eventListener.getTotalSplits(), 5);
             });
         }
         catch (Exception e) {

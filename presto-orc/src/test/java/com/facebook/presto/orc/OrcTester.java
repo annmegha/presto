@@ -360,8 +360,9 @@ public class OrcTester
     }
 
     /**
-     * @param type Presto data type for the readValues.
-     * @param readValues The values to be written, read and compared against.
+     *
+     * @param type          Presto data type for the readValues.
+     * @param readValues    The values to be written, read and compared against.
      * @param columnFilters The filters for the readers. For CHAR(n) values, the columnFilters should remove the paddings.
      * @param valuesFilters The filters for the readValues. For CHAR(n) values, valuesFilters keeps the original paddings.
      * @throws Exception
@@ -1278,11 +1279,11 @@ public class OrcTester
             return filter.testLong(((Number) value).longValue());
         }
 
-        if (type.equals(REAL)) {
+        if (type == REAL) {
             return filter.testFloat(((Number) value).floatValue());
         }
 
-        if (type.equals(DOUBLE)) {
+        if (type == DOUBLE) {
             return filter.testDouble((double) value);
         }
 

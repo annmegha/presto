@@ -41,7 +41,6 @@ public class JsonRenderer
 {
     private final JsonCodec<Map<PlanFragmentId, JsonPlanFragment>> planMapCodec;
     private final JsonCodec<JsonRenderedNode> codec;
-    private final JsonCodec<Map<PlanFragmentId, JsonPlan>> deserializationCodec;
 
     public JsonRenderer(FunctionAndTypeManager functionAndTypeManager)
     {
@@ -52,12 +51,6 @@ public class JsonRenderer
         JsonCodecFactory codecFactory = new JsonCodecFactory(provider, true);
         this.codec = codecFactory.jsonCodec(JsonRenderedNode.class);
         this.planMapCodec = codecFactory.mapJsonCodec(PlanFragmentId.class, JsonPlanFragment.class);
-        this.deserializationCodec = codecFactory.mapJsonCodec(PlanFragmentId.class, JsonPlan.class);
-    }
-
-    public Map<PlanFragmentId, JsonPlan> deserialize(String serialized)
-    {
-        return deserializationCodec.fromJson(serialized);
     }
 
     @Override
@@ -91,8 +84,7 @@ public class JsonRenderer
                 node.getRemoteSources().stream()
                         .map(PlanFragmentId::toString)
                         .collect(toImmutableList()),
-                node.getEstimatedStats(),
-                node.getStats());
+                node.getEstimatedStats());
     }
 
     public static class JsonRenderedNode
@@ -105,10 +97,9 @@ public class JsonRenderer
         private final List<JsonRenderedNode> children;
         private final List<String> remoteSources;
         private final List<PlanNodeStatsEstimate> estimates;
-        private final Optional<PlanNodeStats> stats;
 
         @JsonCreator
-        public JsonRenderedNode(Optional<SourceLocation> sourceLocation, String id, String name, String identifier, String details, List<JsonRenderedNode> children, List<String> remoteSources, List<PlanNodeStatsEstimate> estimates, Optional<PlanNodeStats> stats)
+        public JsonRenderedNode(Optional<SourceLocation> sourceLocation, String id, String name, String identifier, String details, List<JsonRenderedNode> children, List<String> remoteSources, List<PlanNodeStatsEstimate> estimates)
         {
             this.sourceLocation = sourceLocation;
             this.id = requireNonNull(id, "id is null");
@@ -118,7 +109,6 @@ public class JsonRenderer
             this.children = requireNonNull(children, "children is null");
             this.remoteSources = requireNonNull(remoteSources, "id is null");
             this.estimates = requireNonNull(estimates, "estimate is null");
-            this.stats = requireNonNull(stats, "stats is null");
         }
 
         @JsonProperty
@@ -169,12 +159,6 @@ public class JsonRenderer
             return estimates;
         }
 
-        @JsonProperty
-        public Optional<PlanNodeStats> getStats()
-        {
-            return stats;
-        }
-
         @Override
         public boolean equals(Object obj)
         {
@@ -192,14 +176,13 @@ public class JsonRenderer
                     Objects.equals(this.details, other.details) &&
                     Objects.equals(this.children, other.children) &&
                     Objects.equals(this.estimates, other.estimates) &&
-                    Objects.equals(this.remoteSources, other.remoteSources) &&
-                    Objects.equals(this.stats, other.stats);
+                    Objects.equals(this.remoteSources, other.remoteSources);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash(name, id, sourceLocation, identifier, details, children, estimates, remoteSources, stats);
+            return Objects.hash(name, id, sourceLocation, identifier, details, children, estimates, remoteSources);
         }
     }
 
@@ -218,27 +201,6 @@ public class JsonRenderer
         public String getPlan()
         {
             return this.plan;
-        }
-    }
-
-    /**
-     * Used for deserializing rendered JSON plan
-     */
-    public static class JsonPlan
-    {
-        @JsonProperty
-        private final JsonRenderedNode plan;
-
-        @JsonCreator
-        public JsonPlan(@JsonProperty("plan") JsonRenderedNode plan)
-        {
-            this.plan = plan;
-        }
-
-        @JsonProperty
-        public JsonRenderedNode getPlan()
-        {
-            return plan;
         }
     }
 }

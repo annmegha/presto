@@ -41,8 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel;
-import static com.facebook.presto.spi.statistics.SourceInfo.ConfidenceLevel.LOW;
 import static com.facebook.presto.util.MoreMath.firstNonNaN;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -53,7 +51,7 @@ import static java.util.Objects.requireNonNull;
 public class PlanNodeStatsEstimate
 {
     private static final double DEFAULT_DATA_SIZE_PER_COLUMN = 50;
-    private static final PlanNodeStatsEstimate UNKNOWN = new PlanNodeStatsEstimate(NaN, NaN, LOW, ImmutableMap.of(), JoinNodeStatsEstimate.unknown(), TableWriterNodeStatsEstimate.unknown(), PartialAggregationStatsEstimate.unknown());
+    private static final PlanNodeStatsEstimate UNKNOWN = new PlanNodeStatsEstimate(NaN, NaN, false, ImmutableMap.of(), JoinNodeStatsEstimate.unknown(), TableWriterNodeStatsEstimate.unknown(), PartialAggregationStatsEstimate.unknown());
 
     private final double outputRowCount;
     private final double totalSize;
@@ -76,7 +74,7 @@ public class PlanNodeStatsEstimate
     public PlanNodeStatsEstimate(
             @JsonProperty("outputRowCount") double outputRowCount,
             @JsonProperty("totalSize") double totalSize,
-            @JsonProperty("confident") ConfidenceLevel confidenceLevel,
+            @JsonProperty("confident") boolean confident,
             @JsonProperty("variableStatistics") Map<VariableReferenceExpression, VariableStatsEstimate> variableStatistics,
             @JsonProperty("joinNodeStatsEstimate") JoinNodeStatsEstimate joinNodeStatsEstimate,
             @JsonProperty("tableWriterNodeStatsEstimate") TableWriterNodeStatsEstimate tableWriterNodeStatsEstimate,
@@ -85,12 +83,12 @@ public class PlanNodeStatsEstimate
         this(outputRowCount,
                 totalSize,
                 HashTreePMap.from(requireNonNull(variableStatistics, "variableStatistics is null")),
-                new CostBasedSourceInfo(confidenceLevel), joinNodeStatsEstimate, tableWriterNodeStatsEstimate, partialAggregationStatsEstimate);
+                new CostBasedSourceInfo(confident), joinNodeStatsEstimate, tableWriterNodeStatsEstimate, partialAggregationStatsEstimate);
     }
 
-    private PlanNodeStatsEstimate(double outputRowCount, double totalSize, ConfidenceLevel confidenceLevel, PMap<VariableReferenceExpression, VariableStatsEstimate> variableStatistics)
+    private PlanNodeStatsEstimate(double outputRowCount, double totalSize, boolean confident, PMap<VariableReferenceExpression, VariableStatsEstimate> variableStatistics)
     {
-        this(outputRowCount, totalSize, variableStatistics, new CostBasedSourceInfo(confidenceLevel));
+        this(outputRowCount, totalSize, variableStatistics, new CostBasedSourceInfo(confident));
     }
 
     public PlanNodeStatsEstimate(double outputRowCount, double totalSize, PMap<VariableReferenceExpression, VariableStatsEstimate> variableStatistics, SourceInfo sourceInfo)
@@ -128,9 +126,9 @@ public class PlanNodeStatsEstimate
     }
 
     @JsonProperty
-    public ConfidenceLevel confidenceLevel()
+    public boolean isConfident()
     {
-        return sourceInfo.confidenceLevel();
+        return sourceInfo.isConfident();
     }
 
     public SourceInfo getSourceInfo()
@@ -329,7 +327,7 @@ public class PlanNodeStatsEstimate
                 new PlanStatistics(
                         Estimate.estimateFromDouble(outputRowCount),
                         Estimate.estimateFromDouble(totalSize),
-                        sourceInfo.confidenceLevel() == LOW ? 0 : 1,
+                        sourceInfo.isConfident() ? 1 : 0,
                         new JoinNodeStatistics(
                                 Estimate.estimateFromDouble(joinNodeStatsEstimate.getNullJoinBuildKeyCount()),
                                 Estimate.estimateFromDouble(joinNodeStatsEstimate.getJoinBuildKeyCount()),
@@ -351,27 +349,27 @@ public class PlanNodeStatsEstimate
     // we should propagate totalSize as default to simplify the relevant operations in rules that do not change this field.
     public static Builder buildFrom(PlanNodeStatsEstimate other)
     {
-        return new Builder(other.getOutputRowCount(), NaN, other.confidenceLevel(), other.variableStatistics);
+        return new Builder(other.getOutputRowCount(), NaN, other.isConfident(), other.variableStatistics);
     }
 
     public static final class Builder
     {
         private double outputRowCount;
         private double totalSize;
-        private ConfidenceLevel confidenceLevel;
+        private boolean confident;
         private PMap<VariableReferenceExpression, VariableStatsEstimate> variableStatistics;
         private PartialAggregationStatsEstimate partialAggregationStatsEstimate;
 
         public Builder()
         {
-            this(NaN, NaN, LOW, HashTreePMap.empty());
+            this(NaN, NaN, false, HashTreePMap.empty());
         }
 
-        private Builder(double outputRowCount, double totalSize, ConfidenceLevel confidenceLevel, PMap<VariableReferenceExpression, VariableStatsEstimate> variableStatistics)
+        private Builder(double outputRowCount, double totalSize, boolean confident, PMap<VariableReferenceExpression, VariableStatsEstimate> variableStatistics)
         {
             this.outputRowCount = outputRowCount;
             this.totalSize = totalSize;
-            this.confidenceLevel = confidenceLevel;
+            this.confident = confident;
             this.variableStatistics = variableStatistics;
             this.partialAggregationStatsEstimate = PartialAggregationStatsEstimate.unknown();
         }
@@ -388,9 +386,9 @@ public class PlanNodeStatsEstimate
             return this;
         }
 
-        public Builder setConfidence(ConfidenceLevel confidenceLevel)
+        public Builder setConfident(boolean confident)
         {
-            this.confidenceLevel = confidenceLevel;
+            this.confident = confident;
             return this;
         }
 
@@ -422,7 +420,7 @@ public class PlanNodeStatsEstimate
         {
             return new PlanNodeStatsEstimate(outputRowCount,
                     totalSize,
-                    confidenceLevel,
+                    confident,
                     variableStatistics,
                     JoinNodeStatsEstimate.unknown(),
                     TableWriterNodeStatsEstimate.unknown(),

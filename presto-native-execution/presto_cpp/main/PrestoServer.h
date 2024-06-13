@@ -202,6 +202,8 @@ class PrestoServer {
 
   void registerSystemConnector();
 
+  std::unique_ptr<velox::cache::SsdCache> setupSsdCache();
+
   const std::string configDirectoryPath_;
 
   std::shared_ptr<CoordinatorDiscoverer> coordinatorDiscoverer_;
@@ -227,7 +229,7 @@ class PrestoServer {
   // Executor for spilling.
   std::shared_ptr<folly::CPUThreadPoolExecutor> spillerExecutor_;
 
-  std::unique_ptr<ConnectionPools> exchangeSourceConnectionPools_;
+  std::unique_ptr<http::HttpClientConnectionPool> exchangeSourceConnectionPool_;
 
   // If not null,  the instance of AsyncDataCache used for in-memory file cache.
   std::shared_ptr<velox::cache::AsyncDataCache> cache_;

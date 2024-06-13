@@ -103,7 +103,6 @@ public class TestFeaturesConfig
                 .setAggregationPartitioningMergingStrategy(LEGACY)
                 .setLegacyArrayAgg(false)
                 .setUseAlternativeFunctionSignatures(false)
-                .setGroupByUsesEqualTo(false)
                 .setLegacyMapSubscript(false)
                 .setReduceAggForComplexTypesEnabled(true)
                 .setRegexLibrary(JONI)
@@ -271,7 +270,9 @@ public class TestFeaturesConfig
                 .setDefaultViewSecurityMode(DEFINER)
                 .setCteHeuristicReplicationThreshold(4)
                 .setLegacyJsonCast(true)
-                .setPrintEstimatedStatsFromCache(false));
+                .setPrintEstimatedStatsFromCache(false)
+                .setUseHistograms(false)
+                .setUseNewNanDefinition(true));
     }
 
     @Test
@@ -297,7 +298,6 @@ public class TestFeaturesConfig
                 .put("deprecated.legacy-array-agg", "true")
                 .put("deprecated.legacy-log-function", "true")
                 .put("use-alternative-function-signatures", "true")
-                .put("deprecated.group-by-uses-equal", "true")
                 .put("deprecated.legacy-map-subscript", "true")
                 .put("reduce-agg-for-complex-types-enabled", "false")
                 .put("deprecated.legacy-row-field-ordinal-access", "true")
@@ -487,6 +487,8 @@ public class TestFeaturesConfig
                 .put("default-view-security-mode", INVOKER.name())
                 .put("cte-heuristic-replication-threshold", "2")
                 .put("optimizer.print-estimated-stats-from-cache", "true")
+                .put("optimizer.use-histograms", "true")
+                .put("use-new-nan-definition", "false")
                 .build();
 
         FeaturesConfig expected = new FeaturesConfig()
@@ -544,7 +546,6 @@ public class TestFeaturesConfig
                 .setPushAggregationThroughJoin(false)
                 .setLegacyArrayAgg(true)
                 .setUseAlternativeFunctionSignatures(true)
-                .setGroupByUsesEqualTo(true)
                 .setLegacyMapSubscript(true)
                 .setReduceAggForComplexTypesEnabled(false)
                 .setRegexLibrary(RE2J)
@@ -699,7 +700,9 @@ public class TestFeaturesConfig
                 .setDefaultViewSecurityMode(INVOKER)
                 .setCteHeuristicReplicationThreshold(2)
                 .setLegacyJsonCast(false)
-                .setPrintEstimatedStatsFromCache(true);
+                .setPrintEstimatedStatsFromCache(true)
+                .setUseHistograms(true)
+                .setUseNewNanDefinition(false);
         assertFullMapping(properties, expected);
     }
 

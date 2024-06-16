@@ -91,7 +91,6 @@ public class UseTask
         if (statement.getCatalog().isPresent()) {
             stateMachine.setSetCatalog(catalog);
         }
-        stateMachine.setSetSchema(schema);
 
         return immediateFuture(null);
     }

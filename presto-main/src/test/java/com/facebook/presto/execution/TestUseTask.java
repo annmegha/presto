@@ -163,8 +163,6 @@ public class TestUseTask
 
     private void executeUse(Use use, String sqlString, Session session, AccessControl accessControl)
     {
-
-       // catalogManager = new CatalogManager();
         Connector testConnector = mockConnectorFactory.create("test", ImmutableMap.of(), new TestingConnectorContext());
         catalogManager = new CatalogManager();
         String catalogName = "test_catalog";

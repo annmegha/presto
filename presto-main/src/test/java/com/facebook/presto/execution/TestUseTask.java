@@ -34,6 +34,7 @@ import com.facebook.presto.transaction.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Optional;
@@ -143,6 +144,13 @@ public class TestUseTask
     private void executeUse(Use use, String sqlString, Session session)
     {
         executeUse(use, sqlString, session, new AllowAllAccessControl());
+    }
+
+    @BeforeMethod
+    public void setUp() {
+        catalogManager = new CatalogManager();
+        transactionManager = createTestTransactionManager(catalogManager);
+        metadata = createTestMetadataManager(transactionManager);
     }
 
     private void executeUse(Use use, String sqlString, Session session, AccessControl accessControl)

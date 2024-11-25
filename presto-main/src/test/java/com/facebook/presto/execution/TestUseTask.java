@@ -147,7 +147,8 @@ public class TestUseTask
     }
 
     @BeforeMethod
-    public void setUp() {
+    public void setUp()
+    {
         catalogManager = new CatalogManager();
         transactionManager = createTestTransactionManager(catalogManager);
         metadata = createTestMetadataManager(transactionManager);

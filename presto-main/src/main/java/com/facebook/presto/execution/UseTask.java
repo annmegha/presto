@@ -15,18 +15,24 @@ package com.facebook.presto.execution;
 
 import com.facebook.presto.Session;
 import com.facebook.presto.common.CatalogSchemaName;
+import com.facebook.presto.common.transaction.TransactionId;
 import com.facebook.presto.metadata.Metadata;
 import com.facebook.presto.spi.security.AccessControl;
+import com.facebook.presto.spi.security.AccessControlContext;
+import com.facebook.presto.spi.security.AccessDeniedException;
+import com.facebook.presto.spi.security.Identity;
 import com.facebook.presto.sql.analyzer.SemanticException;
 import com.facebook.presto.sql.tree.Expression;
 import com.facebook.presto.sql.tree.Identifier;
 import com.facebook.presto.sql.tree.Use;
 import com.facebook.presto.transaction.TransactionManager;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.List;
 
 import static com.facebook.presto.metadata.MetadataUtil.getConnectorIdOrThrow;
+import static com.facebook.presto.spi.security.AccessDeniedException.denyCatalogAccess;
 import static com.facebook.presto.sql.analyzer.SemanticErrorCode.CATALOG_NOT_SPECIFIED;
 import static com.facebook.presto.sql.analyzer.SemanticErrorCode.MISSING_SCHEMA;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
@@ -35,6 +41,8 @@ import static java.lang.String.format;
 public class UseTask
         implements SessionTransactionControlTask<Use>
 {
+    String catalog;
+    String schema;
     @Override
     public String getName()
     {
@@ -52,11 +60,27 @@ public class UseTask
     {
         Session session = stateMachine.getSession();
 
+        TransactionId transactionId = session.getTransactionId().get();
+
+        Identity identity = session.getIdentity();
+
+        AccessControlContext context = session.getAccessControlContext();
+
         checkCatalogAndSessionPresent(statement, session);
 
         checkAndSetCatalog(statement, metadata, stateMachine, session);
 
         checkAndSetSchema(statement, metadata, stateMachine, session);
+
+        if (!hasCatalogAccess(identity, context, catalog, accessControl)) {
+            denyCatalogAccess(catalog);
+        }
+
+        CatalogSchemaName name = new CatalogSchemaName(catalog, schema);
+
+        if (!hasSchemaAccess(transactionId, identity, context, catalog, schema, accessControl)) {
+            throw new AccessDeniedException("Cannot access schema: " + name);
+        }
 
         return immediateFuture(null);
     }
@@ -79,13 +103,23 @@ public class UseTask
 
     private void checkAndSetSchema(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session)
     {
-        String catalog = statement.getCatalog()
+        catalog = statement.getCatalog()
                 .map(Identifier::getValueLowerCase)
                 .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
-        String schema = statement.getSchema().getValueLowerCase();
+        schema = statement.getSchema().getValueLowerCase();
         if (!metadata.getMetadataResolver(session).schemaExists(new CatalogSchemaName(catalog, schema))) {
             throw new SemanticException(MISSING_SCHEMA, format("Schema does not exist: %s.%s", catalog, schema));
         }
         stateMachine.setSetSchema(schema);
+    }
+
+    private boolean hasCatalogAccess(Identity identity, AccessControlContext context, String catalog, AccessControl accessControl)
+    {
+        return !accessControl.filterCatalogs(identity, context, ImmutableSet.of(catalog)).isEmpty();
+    }
+
+    private boolean hasSchemaAccess(TransactionId transactionId, Identity identity, AccessControlContext context, String catalog, String schema, AccessControl accessControl)
+    {
+        return !accessControl.filterSchemas(transactionId, identity, context, catalog, ImmutableSet.of(schema)).isEmpty();
     }
 }

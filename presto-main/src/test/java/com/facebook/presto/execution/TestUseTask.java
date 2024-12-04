@@ -45,13 +45,10 @@ import static com.facebook.presto.execution.TaskTestUtils.createQueryStateMachin
 import static com.facebook.presto.metadata.MetadataManager.createTestMetadataManager;
 import static com.facebook.presto.spi.ConnectorId.createInformationSchemaConnectorId;
 import static com.facebook.presto.spi.ConnectorId.createSystemTablesConnectorId;
-import static com.facebook.presto.sql.analyzer.SemanticErrorCode.MISSING_CATALOG;
-import static com.facebook.presto.sql.analyzer.SemanticErrorCode.MISSING_SCHEMA;
 import static com.facebook.presto.testing.TestingSession.testSessionBuilder;
 import static com.facebook.presto.transaction.InMemoryTransactionManager.createTestTransactionManager;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.Executors.newCachedThreadPool;
-import static org.testng.Assert.assertEquals;
 
 @Test(singleThreaded = true)
 public class TestUseTask
@@ -77,7 +74,9 @@ public class TestUseTask
         executeUse(use, sqlString, TEST_SESSION);
     }
 
-    @Test
+    @Test(
+            expectedExceptions = SemanticException.class,
+            expectedExceptionsMessageRegExp = "Catalog must be specified when session catalog is not set")
     public void testUseNoCatalog()
     {
         Use use = new Use(Optional.empty(), identifier("test_schema"));
@@ -86,29 +85,22 @@ public class TestUseTask
                 .setCatalog(null)
                 .setSchema(null)
                 .build();
-        try {
-            executeUse(use, sqlString, session);
-        }
-        catch (SemanticException e) {
-            assertEquals(e.getMessage(), "Catalog must be specified when session catalog is not set");
-        }
+        executeUse(use, sqlString, session);
     }
 
-    @Test
+    @Test(
+            expectedExceptions = SemanticException.class,
+            expectedExceptionsMessageRegExp = "Catalog does not exist: invalid_catalog")
     public void testUseInvalidCatalog()
     {
         Use use = new Use(Optional.of(identifier("invalid_catalog")), identifier("test_schema"));
         String sqlString = "USE invalid_catalog.test_schema";
-        try {
-            executeUse(use, sqlString, TEST_SESSION);
-        }
-        catch (SemanticException e) {
-            assertEquals(e.getCode(), MISSING_CATALOG);
-            assertEquals(e.getMessage(), "Catalog does not exist: invalid_catalog");
-        }
+        executeUse(use, sqlString, TEST_SESSION);
     }
 
-    @Test
+    @Test(
+            expectedExceptions = SemanticException.class,
+            expectedExceptionsMessageRegExp = "Schema does not exist: test_catalog.invalid_schema")
     public void testUseInvalidSchema()
     {
         Use use = new Use(Optional.of(identifier("test_catalog")), identifier("invalid_schema"));
@@ -116,16 +108,12 @@ public class TestUseTask
         Session session = testSessionBuilder()
                 .setSchema("invalid_schema")
                 .build();
-        try {
-            executeUse(use, sqlString, session);
-        }
-        catch (SemanticException e) {
-            assertEquals(e.getCode(), MISSING_SCHEMA);
-            assertEquals(e.getMessage(), "Schema does not exist: test_catalog.invalid_schema");
-        }
+        executeUse(use, sqlString, session);
     }
 
-    @Test
+    @Test(
+            expectedExceptions = AccessDeniedException.class,
+            expectedExceptionsMessageRegExp = "Access Denied: Cannot access catalog test_catalog")
     public void testUseAccessDenied()
     {
         Use use = new Use(Optional.of(identifier("test_catalog")), identifier("test_schema"));
@@ -134,12 +122,7 @@ public class TestUseTask
                 .setIdentity(new Identity("user", Optional.empty()))
                 .build();
         AccessControl accessControl = new DenyAllAccessControl();
-        try {
-            executeUse(use, sqlString, session);
-        }
-        catch (AccessDeniedException e) {
-            assertEquals(e.getMessage(), "Cannot access schema: test_catalog.test_schema");
-        }
+        executeUse(use, sqlString, session, accessControl);
     }
 
     private void executeUse(Use use, String sqlString, Session session)

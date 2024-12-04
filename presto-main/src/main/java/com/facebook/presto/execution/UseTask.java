@@ -41,8 +41,6 @@ import static java.lang.String.format;
 public class UseTask
         implements SessionTransactionControlTask<Use>
 {
-    String catalog;
-    String schema;
     @Override
     public String getName()
     {
@@ -60,27 +58,11 @@ public class UseTask
     {
         Session session = stateMachine.getSession();
 
-        TransactionId transactionId = session.getTransactionId().get();
-
-        Identity identity = session.getIdentity();
-
-        AccessControlContext context = session.getAccessControlContext();
-
         checkCatalogAndSessionPresent(statement, session);
 
-        checkAndSetCatalog(statement, metadata, stateMachine, session);
+        checkAndSetCatalog(statement, metadata, stateMachine, session, accessControl);
 
-        checkAndSetSchema(statement, metadata, stateMachine, session);
-
-        if (!hasCatalogAccess(identity, context, catalog, accessControl)) {
-            denyCatalogAccess(catalog);
-        }
-
-        CatalogSchemaName name = new CatalogSchemaName(catalog, schema);
-
-        if (!hasSchemaAccess(transactionId, identity, context, catalog, schema, accessControl)) {
-            throw new AccessDeniedException("Cannot access schema: " + name);
-        }
+        checkAndSetSchema(statement, metadata, stateMachine, session, accessControl);
 
         return immediateFuture(null);
     }
@@ -92,23 +74,31 @@ public class UseTask
         }
     }
 
-    private void checkAndSetCatalog(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session)
+    private void checkAndSetCatalog(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session, AccessControl accessControl)
     {
         if (statement.getCatalog().isPresent()) {
-            String catalog = statement.getCatalog().get().getValueLowerCase();
+            String catalog = statement.getCatalog()
+                    .map(Identifier::getValueLowerCase)
+                    .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
             getConnectorIdOrThrow(session, metadata, catalog);
             stateMachine.setSetCatalog(catalog);
         }
     }
 
-    private void checkAndSetSchema(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session)
+    private void checkAndSetSchema(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session, AccessControl accessControl)
     {
-        catalog = statement.getCatalog()
+        String catalog = statement.getCatalog()
                 .map(Identifier::getValueLowerCase)
                 .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
-        schema = statement.getSchema().getValueLowerCase();
+        String schema = statement.getSchema().getValueLowerCase();
         if (!metadata.getMetadataResolver(session).schemaExists(new CatalogSchemaName(catalog, schema))) {
             throw new SemanticException(MISSING_SCHEMA, format("Schema does not exist: %s.%s", catalog, schema));
+        }
+        if (!hasCatalogAccess(session.getIdentity(), session.getAccessControlContext(), catalog, accessControl)) {
+            denyCatalogAccess(catalog);
+        }
+        if (!hasSchemaAccess(session.getTransactionId().get(), session.getIdentity(), session.getAccessControlContext(), catalog, schema, accessControl)) {
+            throw new AccessDeniedException("Cannot access schema: " + new CatalogSchemaName(catalog, schema));
         }
         stateMachine.setSetSchema(schema);
     }

@@ -14,102 +14,155 @@
 package com.facebook.presto.execution;
 
 import com.facebook.presto.Session;
-import com.facebook.presto.common.CatalogSchemaName;
-import com.facebook.presto.common.transaction.TransactionId;
-import com.facebook.presto.metadata.Metadata;
+import com.facebook.presto.connector.MockConnectorFactory;
+import com.facebook.presto.metadata.Catalog;
+import com.facebook.presto.metadata.CatalogManager;
+import com.facebook.presto.metadata.MetadataManager;
+import com.facebook.presto.spi.ConnectorId;
+import com.facebook.presto.spi.connector.Connector;
 import com.facebook.presto.spi.security.AccessControl;
-import com.facebook.presto.spi.security.AccessControlContext;
 import com.facebook.presto.spi.security.AccessDeniedException;
+import com.facebook.presto.spi.security.AllowAllAccessControl;
+import com.facebook.presto.spi.security.DenyAllAccessControl;
 import com.facebook.presto.spi.security.Identity;
 import com.facebook.presto.sql.analyzer.SemanticException;
-import com.facebook.presto.sql.tree.Expression;
 import com.facebook.presto.sql.tree.Identifier;
 import com.facebook.presto.sql.tree.Use;
+import com.facebook.presto.testing.TestingConnectorContext;
 import com.facebook.presto.transaction.TransactionManager;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
-import static com.facebook.presto.metadata.MetadataUtil.getConnectorIdOrThrow;
-import static com.facebook.presto.spi.security.AccessDeniedException.denyCatalogAccess;
-import static com.facebook.presto.sql.analyzer.SemanticErrorCode.CATALOG_NOT_SPECIFIED;
-import static com.facebook.presto.sql.analyzer.SemanticErrorCode.MISSING_SCHEMA;
-import static com.google.common.util.concurrent.Futures.immediateFuture;
-import static java.lang.String.format;
+import static com.facebook.airlift.concurrent.Threads.daemonThreadsNamed;
+import static com.facebook.presto.SessionTestUtils.TEST_SESSION;
+import static com.facebook.presto.execution.TaskTestUtils.createQueryStateMachine;
+import static com.facebook.presto.metadata.MetadataManager.createTestMetadataManager;
+import static com.facebook.presto.spi.ConnectorId.createInformationSchemaConnectorId;
+import static com.facebook.presto.spi.ConnectorId.createSystemTablesConnectorId;
+import static com.facebook.presto.testing.TestingSession.testSessionBuilder;
+import static com.facebook.presto.transaction.InMemoryTransactionManager.createTestTransactionManager;
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 
-public class UseTask
-        implements SessionTransactionControlTask<Use>
+@Test(singleThreaded = true)
+public class TestUseTask
 {
-    @Override
-    public String getName()
+    private final ExecutorService executor = newCachedThreadPool(daemonThreadsNamed("test-%s"));
+    private CatalogManager catalogManager;
+    private TransactionManager transactionManager;
+    private MetadataManager metadata = createTestMetadataManager();
+    MockConnectorFactory.Builder builder = MockConnectorFactory.builder();
+    MockConnectorFactory mockConnectorFactory = builder.withListSchemaNames(connectorSession -> ImmutableList.of("test_schema"))
+            .build();
+
+    @BeforeMethod
+    public void setUp()
     {
-        return "USE";
+        catalogManager = new CatalogManager();
+        transactionManager = createTestTransactionManager(catalogManager);
+        metadata = createTestMetadataManager(transactionManager);
     }
 
-    @Override
-    public ListenableFuture<?> execute(
-            Use statement,
-            TransactionManager transactionManager,
-            Metadata metadata,
-            AccessControl accessControl,
-            QueryStateMachine stateMachine,
-            List<Expression> parameters)
+    @AfterClass(alwaysRun = true)
+    public void tearDown()
     {
-        Session session = stateMachine.getSession();
-
-        checkCatalogAndSessionPresent(statement, session);
-
-        checkAndSetCatalog(statement, metadata, stateMachine, session, accessControl);
-
-        checkAndSetSchema(statement, metadata, stateMachine, session, accessControl);
-
-        return immediateFuture(null);
+        executor.shutdownNow();
     }
 
-    private void checkCatalogAndSessionPresent(Use statement, Session session)
+    @Test
+    public void testUse()
     {
-        if (!statement.getCatalog().isPresent() && !session.getCatalog().isPresent()) {
-            throw new SemanticException(CATALOG_NOT_SPECIFIED, statement, "Catalog must be specified when session catalog is not set");
-        }
+        Use use = new Use(Optional.of(identifier("test_catalog")), identifier("test_schema"));
+        String sqlString = "USE test_catalog.test_schema";
+        executeUse(use, sqlString, TEST_SESSION);
     }
 
-    private void checkAndSetCatalog(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session, AccessControl accessControl)
+    @Test(
+            expectedExceptions = SemanticException.class,
+            expectedExceptionsMessageRegExp = "Catalog must be specified when session catalog is not set")
+    public void testUseNoCatalog()
     {
-        if (statement.getCatalog().isPresent()) {
-            String catalog = statement.getCatalog()
-                    .map(Identifier::getValueLowerCase)
-                    .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
-            getConnectorIdOrThrow(session, metadata, catalog);
-            stateMachine.setSetCatalog(catalog);
-        }
+        Use use = new Use(Optional.empty(), identifier("test_schema"));
+        String sqlString = "USE test_schema";
+        Session session = testSessionBuilder()
+                .setCatalog(null)
+                .setSchema(null)
+                .build();
+        executeUse(use, sqlString, session);
     }
 
-    private void checkAndSetSchema(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session, AccessControl accessControl)
+    @Test(
+            expectedExceptions = SemanticException.class,
+            expectedExceptionsMessageRegExp = "Catalog does not exist: invalid_catalog")
+    public void testUseInvalidCatalog()
     {
-        String catalog = statement.getCatalog()
-                .map(Identifier::getValueLowerCase)
-                .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
-        String schema = statement.getSchema().getValueLowerCase();
-        if (!metadata.getMetadataResolver(session).schemaExists(new CatalogSchemaName(catalog, schema))) {
-            throw new SemanticException(MISSING_SCHEMA, format("Schema does not exist: %s.%s", catalog, schema));
-        }
-        if (!hasCatalogAccess(session.getIdentity(), session.getAccessControlContext(), catalog, accessControl)) {
-            denyCatalogAccess(catalog);
-        }
-        if (!hasSchemaAccess(session.getTransactionId().get(), session.getIdentity(), session.getAccessControlContext(), catalog, schema, accessControl)) {
-            throw new AccessDeniedException("Cannot access schema: " + new CatalogSchemaName(catalog, schema));
-        }
-        stateMachine.setSetSchema(schema);
+        Use use = new Use(Optional.of(identifier("invalid_catalog")), identifier("test_schema"));
+        String sqlString = "USE invalid_catalog.test_schema";
+        executeUse(use, sqlString, TEST_SESSION);
     }
 
-    private boolean hasCatalogAccess(Identity identity, AccessControlContext context, String catalog, AccessControl accessControl)
+    @Test(
+            expectedExceptions = SemanticException.class,
+            expectedExceptionsMessageRegExp = "Schema does not exist: test_catalog.invalid_schema")
+    public void testUseInvalidSchema()
     {
-        return !accessControl.filterCatalogs(identity, context, ImmutableSet.of(catalog)).isEmpty();
+        Use use = new Use(Optional.of(identifier("test_catalog")), identifier("invalid_schema"));
+        String sqlString = "USE test_catalog.invalid_schema";
+        Session session = testSessionBuilder()
+                .setSchema("invalid_schema")
+                .build();
+        executeUse(use, sqlString, session);
     }
 
-    private boolean hasSchemaAccess(TransactionId transactionId, Identity identity, AccessControlContext context, String catalog, String schema, AccessControl accessControl)
+    @Test(
+            expectedExceptions = AccessDeniedException.class,
+            expectedExceptionsMessageRegExp = "Access Denied: Cannot access catalog test_catalog")
+    public void testUseAccessDenied()
     {
-        return !accessControl.filterSchemas(transactionId, identity, context, catalog, ImmutableSet.of(schema)).isEmpty();
+        Use use = new Use(Optional.of(identifier("test_catalog")), identifier("test_schema"));
+        String sqlString = "USE test_catalog.test_schema";
+        Session session = testSessionBuilder()
+                .setIdentity(new Identity("user", Optional.empty()))
+                .build();
+        AccessControl accessControl = new DenyAllAccessControl();
+        executeUse(use, sqlString, session, accessControl);
+    }
+
+    private void executeUse(Use use, String sqlString, Session session)
+    {
+        executeUse(use, sqlString, session, new AllowAllAccessControl());
+    }
+
+    private void executeUse(Use use, String sqlString, Session session, AccessControl accessControl)
+    {
+        catalogManager = new CatalogManager();
+        transactionManager = createTestTransactionManager(catalogManager);
+        metadata = createTestMetadataManager(transactionManager);
+
+        Connector testConnector = mockConnectorFactory.create("test", ImmutableMap.of(), new TestingConnectorContext());
+        String catalogName = "test_catalog";
+        ConnectorId connectorId = new ConnectorId(catalogName);
+        catalogManager.registerCatalog(new Catalog(
+                catalogName,
+                connectorId,
+                testConnector,
+                createInformationSchemaConnectorId(connectorId),
+                testConnector,
+                createSystemTablesConnectorId(connectorId),
+                testConnector));
+
+        QueryStateMachine stateMachine = createQueryStateMachine(sqlString, session, false, transactionManager, executor, metadata);
+        UseTask useTask = new UseTask();
+        useTask.execute(use, transactionManager, metadata, accessControl, stateMachine, emptyList());
+    }
+    private Identifier identifier(String name)
+    {
+        return new Identifier(name);
     }
 }

@@ -60,6 +60,15 @@ public class TestUseTask
     MockConnectorFactory.Builder builder = MockConnectorFactory.builder();
     MockConnectorFactory mockConnectorFactory = builder.withListSchemaNames(connectorSession -> ImmutableList.of("test_schema"))
             .build();
+
+    @BeforeMethod
+    public void setUp()
+    {
+        catalogManager = new CatalogManager();
+        transactionManager = createTestTransactionManager(catalogManager);
+        metadata = createTestMetadataManager(transactionManager);
+    }
+
     @AfterClass(alwaysRun = true)
     public void tearDown()
     {
@@ -128,14 +137,6 @@ public class TestUseTask
     private void executeUse(Use use, String sqlString, Session session)
     {
         executeUse(use, sqlString, session, new AllowAllAccessControl());
-    }
-
-    @BeforeMethod
-    public void setUp()
-    {
-        catalogManager = new CatalogManager();
-        transactionManager = createTestTransactionManager(catalogManager);
-        metadata = createTestMetadataManager(transactionManager);
     }
 
     private void executeUse(Use use, String sqlString, Session session, AccessControl accessControl)

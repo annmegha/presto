@@ -76,13 +76,11 @@ public class UseTask
 
     private void checkAndSetCatalog(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session, AccessControl accessControl)
     {
-        if (statement.getCatalog().isPresent()) {
-            String catalog = statement.getCatalog()
-                    .map(Identifier::getValueLowerCase)
-                    .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
-            getConnectorIdOrThrow(session, metadata, catalog);
-            stateMachine.setSetCatalog(catalog);
-        }
+        String catalog = statement.getCatalog()
+                .map(Identifier::getValueLowerCase)
+                .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
+        getConnectorIdOrThrow(session, metadata, catalog);
+        stateMachine.setSetCatalog(catalog);
     }
 
     private void checkAndSetSchema(Use statement, Metadata metadata, QueryStateMachine stateMachine, Session session, AccessControl accessControl)

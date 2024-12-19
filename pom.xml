@@ -268,6 +268,7 @@
                 <artifactId>presto-password-authenticators</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            
 
             <dependency>
                 <groupId>com.facebook.presto</groupId>

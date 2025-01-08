@@ -80,6 +80,9 @@ public class UseTask
                 .map(Identifier::getValueLowerCase)
                 .orElseGet(() -> session.getCatalog().map(String::toLowerCase).get());
         getConnectorIdOrThrow(session, metadata, catalog);
+        if (!hasCatalogAccess(session.getIdentity(), session.getAccessControlContext(), catalog, accessControl)) {
+            denyCatalogAccess(catalog);
+        }
         stateMachine.setSetCatalog(catalog);
     }
 
@@ -91,9 +94,6 @@ public class UseTask
         String schema = statement.getSchema().getValueLowerCase();
         if (!metadata.getMetadataResolver(session).schemaExists(new CatalogSchemaName(catalog, schema))) {
             throw new SemanticException(MISSING_SCHEMA, format("Schema does not exist: %s.%s", catalog, schema));
-        }
-        if (!hasCatalogAccess(session.getIdentity(), session.getAccessControlContext(), catalog, accessControl)) {
-            denyCatalogAccess(catalog);
         }
         if (!hasSchemaAccess(session.getTransactionId().get(), session.getIdentity(), session.getAccessControlContext(), catalog, schema, accessControl)) {
             throw new AccessDeniedException("Cannot access schema: " + new CatalogSchemaName(catalog, schema));

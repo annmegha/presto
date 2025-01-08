@@ -56,10 +56,8 @@ public class TestUseTask
     private final ExecutorService executor = newCachedThreadPool(daemonThreadsNamed("test-%s"));
     private CatalogManager catalogManager;
     private TransactionManager transactionManager;
-    private MetadataManager metadata = createTestMetadataManager();
-    MockConnectorFactory.Builder builder = MockConnectorFactory.builder();
-    MockConnectorFactory mockConnectorFactory = builder.withListSchemaNames(connectorSession -> ImmutableList.of("test_schema"))
-            .build();
+    private MetadataManager metadata;
+    MockConnectorFactory mockConnectorFactory;
 
     @BeforeClass
     public void setUp()
@@ -67,6 +65,10 @@ public class TestUseTask
         catalogManager = new CatalogManager();
         transactionManager = createTestTransactionManager(catalogManager);
         metadata = createTestMetadataManager(transactionManager);
+
+        MockConnectorFactory.Builder builder = MockConnectorFactory.builder();
+        mockConnectorFactory = builder.withListSchemaNames(connectorSession -> ImmutableList.of("test_schema"))
+                .build();
     }
 
     @AfterClass(alwaysRun = true)
@@ -161,6 +163,7 @@ public class TestUseTask
         UseTask useTask = new UseTask();
         useTask.execute(use, transactionManager, metadata, accessControl, stateMachine, emptyList());
     }
+
     private Identifier identifier(String name)
     {
         return new Identifier(name);

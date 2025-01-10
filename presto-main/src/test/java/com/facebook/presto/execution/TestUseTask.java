@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 
 import static com.facebook.airlift.concurrent.Threads.daemonThreadsNamed;
 import static com.facebook.presto.SessionTestUtils.TEST_SESSION;
+import static com.facebook.presto.connector.MockConnectorFactory.builder;
 import static com.facebook.presto.execution.TaskTestUtils.createQueryStateMachine;
 import static com.facebook.presto.metadata.MetadataManager.createTestMetadataManager;
 import static com.facebook.presto.spi.ConnectorId.createInformationSchemaConnectorId;
@@ -57,7 +58,6 @@ public class TestUseTask
     private CatalogManager catalogManager;
     private TransactionManager transactionManager;
     private MetadataManager metadata;
-    MockConnectorFactory mockConnectorFactory;
 
     @BeforeClass
     public void setUp()
@@ -65,10 +65,6 @@ public class TestUseTask
         catalogManager = new CatalogManager();
         transactionManager = createTestTransactionManager(catalogManager);
         metadata = createTestMetadataManager(transactionManager);
-
-        MockConnectorFactory.Builder builder = MockConnectorFactory.builder();
-        mockConnectorFactory = builder.withListSchemaNames(connectorSession -> ImmutableList.of("test_schema"))
-                .build();
     }
 
     @AfterClass(alwaysRun = true)
@@ -80,9 +76,10 @@ public class TestUseTask
     @Test
     public void testUse()
     {
-        Use use = new Use(Optional.of(identifier("test_catalog")), identifier("test_schema"));
+        Use use = new Use(Optional.of(new Identifier("test_catalog")), new Identifier("test_schema"));
         String sqlString = "USE test_catalog.test_schema";
-        executeUse(use, sqlString, TEST_SESSION);
+        AccessControl accessControl = new AllowAllAccessControl();
+        executeUse(use, sqlString, TEST_SESSION, accessControl);
     }
 
     @Test(
@@ -90,13 +87,14 @@ public class TestUseTask
             expectedExceptionsMessageRegExp = "Catalog must be specified when session catalog is not set")
     public void testUseNoCatalog()
     {
-        Use use = new Use(Optional.empty(), identifier("test_schema"));
+        Use use = new Use(Optional.empty(), new Identifier("test_schema"));
         String sqlString = "USE test_schema";
         Session session = testSessionBuilder()
                 .setCatalog(null)
                 .setSchema(null)
                 .build();
-        executeUse(use, sqlString, session);
+        AccessControl accessControl = new AllowAllAccessControl();
+        executeUse(use, sqlString, session, accessControl);
     }
 
     @Test(
@@ -104,9 +102,10 @@ public class TestUseTask
             expectedExceptionsMessageRegExp = "Catalog does not exist: invalid_catalog")
     public void testUseInvalidCatalog()
     {
-        Use use = new Use(Optional.of(identifier("invalid_catalog")), identifier("test_schema"));
+        Use use = new Use(Optional.of(new Identifier("invalid_catalog")), new Identifier("test_schema"));
         String sqlString = "USE invalid_catalog.test_schema";
-        executeUse(use, sqlString, TEST_SESSION);
+        AccessControl accessControl = new AllowAllAccessControl();
+        executeUse(use, sqlString, TEST_SESSION, accessControl);
     }
 
     @Test(
@@ -114,12 +113,13 @@ public class TestUseTask
             expectedExceptionsMessageRegExp = "Schema does not exist: test_catalog.invalid_schema")
     public void testUseInvalidSchema()
     {
-        Use use = new Use(Optional.of(identifier("test_catalog")), identifier("invalid_schema"));
+        Use use = new Use(Optional.of(new Identifier("test_catalog")), new Identifier("invalid_schema"));
         String sqlString = "USE test_catalog.invalid_schema";
         Session session = testSessionBuilder()
                 .setSchema("invalid_schema")
                 .build();
-        executeUse(use, sqlString, session);
+        AccessControl accessControl = new AllowAllAccessControl();
+        executeUse(use, sqlString, session, accessControl);
     }
 
     @Test(
@@ -127,7 +127,7 @@ public class TestUseTask
             expectedExceptionsMessageRegExp = "Access Denied: Cannot access catalog test_catalog")
     public void testUseAccessDenied()
     {
-        Use use = new Use(Optional.of(identifier("test_catalog")), identifier("test_schema"));
+        Use use = new Use(Optional.of(new Identifier("test_catalog")), new Identifier("test_schema"));
         String sqlString = "USE test_catalog.test_schema";
         Session session = testSessionBuilder()
                 .setIdentity(new Identity("user", Optional.empty()))
@@ -136,13 +136,11 @@ public class TestUseTask
         executeUse(use, sqlString, session, accessControl);
     }
 
-    private void executeUse(Use use, String sqlString, Session session)
-    {
-        executeUse(use, sqlString, session, new AllowAllAccessControl());
-    }
-
     private void executeUse(Use use, String sqlString, Session session, AccessControl accessControl)
     {
+        MockConnectorFactory mockConnectorFactory = builder()
+                .withListSchemaNames(connectorSession -> ImmutableList.of("test_schema"))
+                .build();
         catalogManager = new CatalogManager();
         transactionManager = createTestTransactionManager(catalogManager);
         metadata = createTestMetadataManager(transactionManager);
@@ -162,10 +160,5 @@ public class TestUseTask
         QueryStateMachine stateMachine = createQueryStateMachine(sqlString, session, false, transactionManager, executor, metadata);
         UseTask useTask = new UseTask();
         useTask.execute(use, transactionManager, metadata, accessControl, stateMachine, emptyList());
-    }
-
-    private Identifier identifier(String name)
-    {
-        return new Identifier(name);
     }
 }
